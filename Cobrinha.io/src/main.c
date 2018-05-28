@@ -8,7 +8,6 @@
 #include <math.h>
 
 bool initialize();
-float roundfunc(float x, int n);
 void cameraUpdate(int *cameraPosition, int x, int y);
 void redrawBackground();
 void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b);
@@ -26,7 +25,7 @@ int orientation = 0;
 float orientation_rad = 0;
 float *orientation_array;
 int dir = LEFT;
-float moveSpeed = 2;
+int moveSpeed = 2;
 const float FPS = 60.0;
 
 ALLEGRO_KEYBOARD_STATE keyState;
@@ -127,8 +126,8 @@ int main(void)
 
 			orientation_array[0] = orientation_rad;
 
-			x += cosf(orientation_rad) * moveSpeed;
-			y -= sinf(orientation_rad) * moveSpeed;
+			x += cos(orientation_rad) * moveSpeed;
+			y -= sin(orientation_rad) * moveSpeed;
 
 			draw = true;
 		}
@@ -222,11 +221,6 @@ bool initialize()
 	return true;
 }
 
-float roundfunc(float x, int n)
-{
-	return roundf(x * powf(10, n)) / powf(10, n);
-}
-
 void redrawBackground()
 {
 	al_clear_to_color(al_map_rgb(13, 17, 22));
@@ -250,8 +244,8 @@ void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b)
 	for (i = 5; i > 0; i--)
 	{
 		float t = (i - 1) / 5;
-		t = sqrtf(t);
-		t = 1 - cosf(t*3.1415926 / 2);
+		t = sqrt(t);
+		t = 1 - cos(t*3.1415926 / 2);
 		al_draw_filled_circle(pos_x, pos_y, raio + i * 0.2, al_map_rgba(r, g, b, (1 - t) * (255 / i)));
 	}
 }
@@ -265,15 +259,15 @@ void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *
 		float orientacao_rad = orientacao_array[i];
 		// círculos
 		k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
-		drawCircle(pos_x - (cosf(orientacao_rad) * i * raio), pos_y + (sinf(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
+		drawCircle(pos_x - (cos(orientacao_rad) * i * raio), pos_y + (sin(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
 
 		if (!i)
 		{
 			// cálculos
-			float xcos = cosf(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
-			float xsin = sinf(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ycos = cosf(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ysin = sinf(orientacao_rad) * -((raio)-(0.1 * 2 * raio) - (raio / 4));
+			float xcos = cos(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
+			float xsin = sin(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
+			float ycos = cos(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
+			float ysin = sin(orientacao_rad) * -((raio)-(0.1 * 2 * raio) - (raio / 4));
 
 			float offset_x1 = xcos + xsin;
 			float offset_x2 = xcos - xsin;
@@ -301,15 +295,15 @@ void drawEnemy(float pos_x, float pos_y, float raio, int r, int g, int b, float 
 		float orientacao_rad = orientacao_array[i];
 		// círculos
 		k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
-		drawCircle(pos_x - (cosf(orientacao_rad) * i * raio_scaled), pos_y + (sinf(orientacao_rad) * i * raio_scaled), raio_scaled, (int)(k*r), (int)(k*g), (int)(k*b));
+		drawCircle(pos_x - (cos(orientacao_rad) * i * raio_scaled), pos_y + (sin(orientacao_rad) * i * raio_scaled), raio_scaled, (int)(k*r), (int)(k*g), (int)(k*b));
 
 		if (!i)
 		{
 			// cálculos
-			float xcos = cosf(orientacao_rad) * ((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
-			float xsin = sinf(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
-			float ycos = cosf(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
-			float ysin = sinf(orientacao_rad) * -((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
+			float xcos = cos(orientacao_rad) * ((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
+			float xsin = sin(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
+			float ycos = cos(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
+			float ysin = sin(orientacao_rad) * -((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
 
 			float offset_x1 = xcos + xsin;
 			float offset_x2 = xcos - xsin;
