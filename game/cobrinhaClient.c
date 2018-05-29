@@ -17,22 +17,30 @@ void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *
 void drawEnemy(float pos_x, float pos_y, float raio, int r, int g, int b, float *orientacao_array, int pontuacao_inimigo, int pontuacao_principal);
 
 float x = 2000, y = 2000;
-int worldWidth = 4950;
-int worldHeight = 4350;
-int screenWidth = 1280;
-int screenHeight = 720;
-int cameraPosition[2] = { 0, 0 };
 enum directions { UP, DOWN, LEFT, RIGHT };
 int orientation = 0;
 float orientation_rad = 0;
 float *orientation_array;
 int dir = LEFT;
+int pressed = 0;
 int moveSpeed = 2;
 const float FPS = 60.0;
+int myid;
+
+int score = 50;
+
+int count, z, enemyid;
+
+int worldWidth = 4950;
+int worldHeight = 4350;
+int screenWidth = 1280;
+int screenHeight = 720;
+int cameraPosition[2] = { 0, 0 };
 
 int l;
 
 DADOS packet;
+direc pack;
 
 ALLEGRO_KEYBOARD_STATE keyState;
 ALLEGRO_TRANSFORM *camera;
@@ -40,7 +48,6 @@ ALLEGRO_EVENT_QUEUE *event_queue;
 ALLEGRO_DISPLAY *display;
 ALLEGRO_BITMAP  *background;
 ALLEGRO_TIMER *timer;
-
 
 int main(void)
 {
@@ -51,25 +58,39 @@ int main(void)
 
 	for(l=0; l<25; l++)
 	{
-		packet.orientacao[l] = -1;
+		packet.orientacao[0][l] = -1;
+		packet.orientacao[1][l] = -1;
+		packet.orientacao[2][l] = -1;
+		packet.orientacao[3][l] = -1;
 	}
 
-	bool done = false;
-	bool draw = false;
-	int pressed = 0;
-	int score = 50;
-
-	int count, z;
-
-	orientation_array = malloc((score / 2) * sizeof(float));
+	orientation_array = (float *) malloc((score / 2) * sizeof(float));
 
 	for (count = 0; count < (score / 2); count++)
 	{
 		orientation_array[count] = orientation_rad;
 	}
 
+	bool done = false;
+	bool draw = false;
+
 	char ServerIP[30]={"127.0.0.1"};
     connectToServer(ServerIP);
+
+    recvMsgFromServer(&myid, WAIT_FOR_IT);
+
+    printf("%i\n", myid);
+
+	packet.x[myid] = x;
+	packet.y[myid] = y;
+	packet.r[myid] = 249;
+	packet.g[myid] = 38;
+	packet.b[myid] = 114;
+	for(z=0; z<(score/2); z++)
+	{
+    	packet.orientacao[myid][z] = orientation_array[z];
+	}
+	packet.pontos[myid] = score;
 
 	al_start_timer(timer);
 
@@ -86,10 +107,14 @@ int main(void)
 			case ALLEGRO_KEY_RIGHT:
 				dir = RIGHT;
 				pressed = 1;
+				pack.dir = RIGHT;
+				pack.pressed = 1;
 				break;
 			case ALLEGRO_KEY_LEFT:
 				dir = LEFT;
 				pressed = 2;
+				pack.dir = LEFT;
+				pack.pressed = 2;
 				break;
 			case ALLEGRO_KEY_ESCAPE:
 				done = true;
@@ -104,74 +129,50 @@ int main(void)
 			case ALLEGRO_KEY_RIGHT:
 				if (pressed == 1)
 					pressed = 0;
+					pack.pressed = 0;
 				break;
 			case ALLEGRO_KEY_LEFT:
 				if (pressed == 2)
 					pressed = 0;
+					pack.pressed = 0;
 				break;
 			}
 		}
 
 		if (events.type == ALLEGRO_EVENT_TIMER)
 		{
-			orientation_array = realloc(orientation_array, (score / 2) * sizeof(float));
-
-			if (pressed)
-			{
-				switch (dir)
-				{
-				case RIGHT:
-					orientation--;
-					break;
-				case LEFT:
-					orientation++;
-					break;
-				}
-
-				if (orientation == 360)
-					orientation = 0;
-				else if (orientation == -1)
-					orientation = 359;
-			}
-
-			orientation_rad = orientation * 3.1415926 / 180.0;
-			for (count = (score / 2) - 1; count > 0; count--)
-				orientation_array[count] = orientation_array[count-1];
-
-			orientation_array[0] = orientation_rad;
-
-			x += cos(orientation_rad) * moveSpeed;
-			y -= sin(orientation_rad) * moveSpeed;
+			sendMsgToServer(&pack, sizeof(direc));
 
 			draw = true;
 		}
 
 		if (draw)
-		{
+		{	
+			//recvMsgFromServer(&packet, DONT_WAIT);
+
+			//printf("%i %i\n", packet.x[myid], packet.y[myid]);
+			
 			// ATUALIZAÇÃO DA IMAGEM
-			cameraUpdate(cameraPosition, x, y);
+			cameraUpdate(cameraPosition, packet.x[myid], packet.y[myid]);
 			al_identity_transform(&camera);
 			al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
 			al_use_transform(&camera);
 
 			redrawBackground();
-			drawChar(x, y, 20, 249, 38, 114, orientation_array, score);
-
-			packet.x = x;
-			packet.y = y;
-			packet.r = 249;
-			packet.g = 38;
-			packet.b = 114;
-			for(z=0; z<(score/2); z++)
-			{
-				packet.orientacao[z] = orientation_array[z];
-			}
-			packet.pontos = score;
-			sendMsgToServer(&packet, sizeof(DADOS));
-
 
 			recvMsgFromServer(&packet, DONT_WAIT);
-			drawEnemy(packet.x, packet.y, 20, packet.r, packet.g, packet.b, packet.orientacao, packet.pontos, score);
+
+			//printf("%f %f\n", packet.x[myid], packet.y[myid]);
+
+			drawChar(packet.x[myid], packet.y[myid], 20, packet.r[myid], packet.g[myid], packet.b[myid], packet.orientacao[myid], packet.pontos[myid]);
+
+			for(enemyid = 0; enemyid <= packet.quantPlayers; enemyid++)
+			{
+				if(enemyid != myid)
+				{
+					drawEnemy(packet.x[enemyid], packet.y[enemyid], 20, packet.r[enemyid], packet.g[enemyid], packet.b[enemyid], packet.orientacao[enemyid], packet.pontos[enemyid], packet.pontos[myid]);
+				}
+			}
 
 			al_flip_display();
 

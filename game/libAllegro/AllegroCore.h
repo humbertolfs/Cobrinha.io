@@ -19,11 +19,17 @@ double startingTime;
 ALLEGRO_DISPLAY *main_window;
 ALLEGRO_EVENT_QUEUE *eventsQueue;
 
+typedef struct direc
+{
+	int dir, pressed;
+} direc;
+
 typedef struct DADOS
 {
-    float x, y;
-    int r, g, b, pontos;
-    float orientacao[25];
+    float x[4], y[4];
+    int r[4], g[4], b[4], pontos[4];
+    float orientacao[4][25];
+    int quantPlayers;
 
 }DADOS;
 
