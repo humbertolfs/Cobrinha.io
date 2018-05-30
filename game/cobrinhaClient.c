@@ -21,15 +21,13 @@ int dir = LEFT;
 int pressed = 0;
 int moveSpeed = 2;
 const float FPS = 60.0;
-int myid, enemyid;
+int myid, enemyid, l;
 
 int worldWidth = 4950;
 int worldHeight = 4350;
 int screenWidth = 1280;
 int screenHeight = 720;
 int cameraPosition[2] = { 0, 0 };
-
-int l;
 
 DADOS packet;
 direc pack;
@@ -118,7 +116,7 @@ int main(void)
 
 			//printf("%i %i\n", packet.x[myid], packet.y[myid]);
 			
-			// ATUALIZA«√O DA IMAGEM
+			// ATUALIZA√á√ÉO DA IMAGEM
 			cameraUpdate(cameraPosition, packet.x[myid], packet.y[myid]);
 			al_identity_transform(&camera);
 			al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
@@ -256,13 +254,13 @@ void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *
 		if(orientacao_array[i] != -1)
 		{
 			float orientacao_rad = orientacao_array[i];
-			// cÌrculos
+			// c√≠rculos
 			k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
 			drawCircle(pos_x - (cos(orientacao_rad) * i * raio), pos_y + (sin(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
 
 			if (!i)
 			{
-				// c·lculos
+				// c√°lculos
 				float xcos = cos(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
 				float xsin = sin(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
 				float ycos = cos(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
@@ -295,13 +293,13 @@ void drawEnemy(float pos_x, float pos_y, float raio, int r, int g, int b, float 
 		if(orientacao_array[i] != -1)
 		{
 			float orientacao_rad = orientacao_array[i];
-			// cÌrculos
+			// c√≠rculos
 			k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
 			drawCircle(pos_x - (cos(orientacao_rad) * i * raio_scaled), pos_y + (sin(orientacao_rad) * i * raio_scaled), raio_scaled, (int)(k*r), (int)(k*g), (int)(k*b));
 
 			if (!i)
 			{
-				// c·lculos
+				// c√°lculos
 				float xcos = cos(orientacao_rad) * ((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
 				float xsin = sin(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
 				float ycos = cos(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
