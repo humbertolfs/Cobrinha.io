@@ -34,7 +34,6 @@ int main()
             packet_server.orientacao[z][l] = -1;
         }
     }
-
     for(z = 0; z < maxPlayers; z++)
     {
         for (count = 0; count < (score / 2); count++)
