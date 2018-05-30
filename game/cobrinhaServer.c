@@ -10,7 +10,6 @@ int *orientation;
 float *orientation_rad;
 int moveSpeed = 2;
 const float FPS = 60.0;
-
 int count, z, idAtual;
 
 int main()
@@ -25,7 +24,6 @@ int main()
 
     struct msg_ret_t retorno;
     bool sair = false;
-    int i=0;
     
     for(z = 0; z < maxPlayers; z++)
     {
