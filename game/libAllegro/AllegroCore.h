@@ -30,7 +30,7 @@ typedef struct DADOS
 {
     float x[maxPlayers], y[maxPlayers];
     int r[maxPlayers], g[maxPlayers], b[maxPlayers], pontos[maxPlayers];
-    float orientacao[4][25];
+    float orientacao[maxPlayers][25];
     int quantPlayers;
 
 }DADOS;
