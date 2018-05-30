@@ -86,7 +86,7 @@ int main(void)
 	packet.r[myid] = 249;
 	packet.g[myid] = 38;
 	packet.b[myid] = 114;
-	for(z=0; z<(score/2); z++)
+	for(z = 0; z < (score/2); z++)
 	{
     	packet.orientacao[myid][z] = orientation_array[z];
 	}

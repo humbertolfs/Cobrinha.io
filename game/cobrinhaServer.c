@@ -112,13 +112,10 @@ int main()
                     packet_server.orientacao[id][z] = orientation_array[z];
                 }
                 packet_server.pontos[id] = score;
-
-                sendMsgToClient(&packet_server, sizeof(DADOS), id);
             }
         }
+        broadcast(&packet_server, sizeof(DADOS));
 
-        
-        
         al_flip_display();
         al_clear_to_color(al_map_rgb(0, 0, 0));
         FPSLimit();

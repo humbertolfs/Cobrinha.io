@@ -33,7 +33,6 @@ typedef struct DADOS
 
 }DADOS;
 
-
 //Funções Centrais da Allegro
 bool coreInit();
 bool windowInit(int W, int H, char title[]);
