@@ -16,20 +16,12 @@ void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b);
 void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *orientacao_array, int pontuacao);
 void drawEnemy(float pos_x, float pos_y, float raio, int r, int g, int b, float *orientacao_array, int pontuacao_inimigo, int pontuacao_principal);
 
-float x = 2000, y = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
-int orientation = 0;
-float orientation_rad = 0;
-float *orientation_array;
 int dir = LEFT;
 int pressed = 0;
 int moveSpeed = 2;
 const float FPS = 60.0;
-int myid;
-
-int score = 50;
-
-int count, z, enemyid;
+int myid, enemyid;
 
 int worldWidth = 4950;
 int worldHeight = 4350;
@@ -56,21 +48,6 @@ int main(void)
 		return -1;
 	}
 
-	for(l=0; l<25; l++)
-	{
-		packet.orientacao[0][l] = -1;
-		packet.orientacao[1][l] = -1;
-		packet.orientacao[2][l] = -1;
-		packet.orientacao[3][l] = -1;
-	}
-
-	orientation_array = (float *) malloc((score / 2) * sizeof(float));
-
-	for (count = 0; count < (score / 2); count++)
-	{
-		orientation_array[count] = orientation_rad;
-	}
-
 	bool done = false;
 	bool draw = false;
 
@@ -80,17 +57,6 @@ int main(void)
     recvMsgFromServer(&myid, WAIT_FOR_IT);
 
     printf("%i\n", myid);
-
-	packet.x[myid] = x;
-	packet.y[myid] = y;
-	packet.r[myid] = 249;
-	packet.g[myid] = 38;
-	packet.b[myid] = 114;
-	for(z = 0; z < (score/2); z++)
-	{
-    	packet.orientacao[myid][z] = orientation_array[z];
-	}
-	packet.pontos[myid] = score;
 
 	al_start_timer(timer);
 
@@ -169,7 +135,8 @@ int main(void)
 			for(enemyid = 0; enemyid <= packet.quantPlayers; enemyid++)
 			{
 				if(enemyid != myid)
-				{
+				{	
+					//printf("%i %f\n", enemyid, packet.x[enemyid]);
 					drawEnemy(packet.x[enemyid], packet.y[enemyid], 20, packet.r[enemyid], packet.g[enemyid], packet.b[enemyid], packet.orientacao[enemyid], packet.pontos[enemyid], packet.pontos[myid]);
 				}
 			}
@@ -286,31 +253,34 @@ void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *
 	float k;
 	for (i = tamanho - 1; i >= 0; i--)
 	{
-		float orientacao_rad = orientacao_array[i];
-		// círculos
-		k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
-		drawCircle(pos_x - (cos(orientacao_rad) * i * raio), pos_y + (sin(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
-
-		if (!i)
+		if(orientacao_array[i] != -1)
 		{
-			// cálculos
-			float xcos = cos(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
-			float xsin = sin(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ycos = cos(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ysin = sin(orientacao_rad) * -((raio)-(0.1 * 2 * raio) - (raio / 4));
+			float orientacao_rad = orientacao_array[i];
+			// círculos
+			k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
+			drawCircle(pos_x - (cos(orientacao_rad) * i * raio), pos_y + (sin(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
 
-			float offset_x1 = xcos + xsin;
-			float offset_x2 = xcos - xsin;
-			float offset_y1 = ycos + ysin;
-			float offset_y2 = ysin - ycos;
+			if (!i)
+			{
+				// cálculos
+				float xcos = cos(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
+				float xsin = sin(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
+				float ycos = cos(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
+				float ysin = sin(orientacao_rad) * -((raio)-(0.1 * 2 * raio) - (raio / 4));
 
-			// olhos (branco)
-			drawCircle(pos_x + offset_x1, pos_y + offset_y1, (float)raio / 4, 255, 255, 255);
-			drawCircle(pos_x + offset_x2, pos_y + offset_y2, (float)raio / 4, 255, 255, 255);
+				float offset_x1 = xcos + xsin;
+				float offset_x2 = xcos - xsin;
+				float offset_y1 = ycos + ysin;
+				float offset_y2 = ysin - ycos;
 
-			// olhos (preto)
-			drawCircle(pos_x + offset_x1 - (raio / 8), pos_y + offset_y1, (float)raio / 8, 0, 0, 0);
-			drawCircle(pos_x + offset_x2 - (raio / 8), pos_y + offset_y2, (float)raio / 8, 0, 0, 0);
+				// olhos (branco)
+				drawCircle(pos_x + offset_x1, pos_y + offset_y1, (float)raio / 4, 255, 255, 255);
+				drawCircle(pos_x + offset_x2, pos_y + offset_y2, (float)raio / 4, 255, 255, 255);
+
+				// olhos (preto)
+				drawCircle(pos_x + offset_x1 - (raio / 8), pos_y + offset_y1, (float)raio / 8, 0, 0, 0);
+				drawCircle(pos_x + offset_x2 - (raio / 8), pos_y + offset_y2, (float)raio / 8, 0, 0, 0);
+			}
 		}
 	}
 }

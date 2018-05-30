@@ -11,8 +11,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#define FPS2 60
 
+#define FPS2 60
+#define maxPlayers 4
+#define score 50
 
 double startingTime;
 
@@ -26,8 +28,8 @@ typedef struct direc
 
 typedef struct DADOS
 {
-    float x[4], y[4];
-    int r[4], g[4], b[4], pontos[4];
+    float x[maxPlayers], y[maxPlayers];
+    int r[maxPlayers], g[maxPlayers], b[maxPlayers], pontos[maxPlayers];
     float orientacao[4][25];
     int quantPlayers;
 
