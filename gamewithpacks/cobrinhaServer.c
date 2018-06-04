@@ -6,6 +6,8 @@ direc pack_server;
 sync syncy;
 int l;
 
+int worldWidth = 4950;
+int worldHeight = 4350;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 float *orientation_rad;
@@ -115,6 +117,16 @@ int main()
 
                 packet_server[id].x += cos(orientation_rad[id]) * moveSpeed;
                 packet_server[id].y -= sin(orientation_rad[id]) * moveSpeed;
+
+                if (packet_server[id].x > worldWidth)
+                        packet_server[id].x -= worldWidth;
+                    else if (packet_server[id].x < 0)
+                        packet_server[id].x += worldWidth;
+
+                    if (packet_server[id].y > worldHeight)
+                        packet_server[id].y -= worldHeight;
+                    else if (packet_server[id].y < 0)
+                        packet_server[id].y += worldHeight;
 
                 packet_server[id].r = 249;
                 packet_server[id].g = 38;
