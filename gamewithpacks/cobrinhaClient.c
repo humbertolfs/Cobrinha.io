@@ -9,11 +9,10 @@ void drawChar(float pos_x, float pos_y, float raio, int r, int g, int b, float *
 void drawEnemy(float pos_x, float pos_y, float raio, int r, int g, int b, float *orientacao_array, int pontuacao_inimigo, int pontuacao_principal);
 
 enum directions { UP, DOWN, LEFT, RIGHT };
-int dir = LEFT;
-int pressed = 0;
 int moveSpeed = 2;
 const float FPS = 60.0;
-int myid, enemyid, l, quantPlayers = 0, z, scoreAtual, x, y;
+int myid, enemyid, l, z, quantPlayers;
+int retorno;
 
 int worldWidth = 4950;
 int worldHeight = 4350;
@@ -21,8 +20,9 @@ int screenWidth = 1280;
 int screenHeight = 720;
 int cameraPosition[2] = { 0, 0 };
 
-DADOS packet;
+DADOS packet[maxPlayers];
 direc pack;
+sync syncy;
 
 ALLEGRO_KEYBOARD_STATE keyState;
 ALLEGRO_TRANSFORM *camera;
@@ -42,11 +42,28 @@ int main(void)
 	bool draw = false;
 
 	char ServerIP[30]={"127.0.0.1"};
-    connectToServer(ServerIP);
+    enum conn_ret_t ans = connectToServer(ServerIP);
 
-    recvMsgFromServer(&myid, WAIT_FOR_IT);
+    if (ans != SERVER_UP) 
+	{
+	    if (ans == SERVER_DOWN) {
+	      puts("Server is down!");
+	      exit(1);
+	    } else if (ans == SERVER_FULL) {
+	      puts("Server is full!");
+	      exit(1);
+	    } else if (ans == SERVER_CLOSED) {
+	      puts("Server is closed for new connections!");
+	      exit(1);
+	    } else {
+	      puts("Server didn't respond to connection!");
+	      exit(1);
+	    }
+	} else {
+		recvMsgFromServer(&myid, WAIT_FOR_IT);
 
-    printf("%i\n", myid);
+    	printf("Meu id eh %i\n", myid);
+	}
 
 	al_start_timer(timer);
 
@@ -61,14 +78,10 @@ int main(void)
 			switch (events.keyboard.keycode)
 			{
 			case ALLEGRO_KEY_RIGHT:
-				dir = RIGHT;
-				pressed = 1;
 				pack.dir = RIGHT;
 				pack.pressed = 1;
 				break;
 			case ALLEGRO_KEY_LEFT:
-				dir = LEFT;
-				pressed = 2;
 				pack.dir = LEFT;
 				pack.pressed = 2;
 				break;
@@ -83,13 +96,11 @@ int main(void)
 			switch (events.keyboard.keycode)
 			{
 			case ALLEGRO_KEY_RIGHT:
-				if (pressed == 1)
-					pressed = 0;
+				if (pack.pressed == 1)
 					pack.pressed = 0;
 				break;
 			case ALLEGRO_KEY_LEFT:
-				if (pressed == 2)
-					pressed = 0;
+				if (pack.pressed == 2)
 					pack.pressed = 0;
 				break;
 			}
@@ -104,35 +115,37 @@ int main(void)
 
 		if (draw)
 		{	
-			//recvMsgFromServer(&packet, DONT_WAIT);
-
-			//printf("%i %i\n", packet.x[myid], packet.y[myid]);
-			
 			// ATUALIZAÇÃO DA IMAGEM
-			cameraUpdate(cameraPosition, x, y);
+			cameraUpdate(cameraPosition, packet[myid].x, packet[myid].y);
 			al_identity_transform(&camera);
 			al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
 			al_use_transform(&camera);
 
 			redrawBackground();
 
-			for(z = 0; z <= quantPlayers; z++)
+			retorno = recvMsgFromServer(&syncy, DONT_WAIT);
+			if(retorno != NO_MESSAGE)
+			{
+				quantPlayers = syncy.numPlayers;
+				for(z = 0; z <= quantPlayers; z++)
+		        {	
+		        	recvMsgFromServer(&packet[z], WAIT_FOR_IT);
+		        }
+			} else {
+				for(z = 0; z <= quantPlayers; z++)
+				{
+					(packet[z].x)++;
+					(packet[z].y)++;
+				}
+			}
+
+	        drawChar(packet[myid].x, packet[myid].y, 20, packet[myid].r, packet[myid].g, packet[myid].b, packet[myid].orientacao, packet[myid].pontos);
+	        for(z = 0; z <= quantPlayers; z++)
 	        {	
-	        	printf("ID Atual: %i\n", z);
-	        	recvMsgFromServer(&packet, DONT_WAIT);
-	        	if(z == myid || quantPlayers == 0)
-	        	{	
-	        		printf("entrei no meu x: %f y: %f\n", packet.x, packet.y);
-	        		drawChar(packet.x, packet.y, 20, packet.r, packet.g, packet.b, packet.orientacao, packet.pontos);
-	        		scoreAtual = packet.pontos;
-	        		x = packet.x;
-	        		y = packet.y;
-	        	} else if(z != myid && quantPlayers > 0){
-	        		printf("entrei no inimigo x: %f y: %f\n", packet.x, packet.y);
-	        		drawEnemy(packet.x, packet.y, 20, packet.r, packet.g, packet.b, packet.orientacao, packet.pontos, scoreAtual);
+	       		if(z != myid)
+	       		{
+	        		drawEnemy(packet[z].x, packet[z].y, 20, packet[z].r, packet[z].g, packet[z].b, packet[z].orientacao, packet[z].pontos, packet[myid].pontos);
 	        	}
-	        	//quantPlayers = packet.quantPlayers;
-	        	printf("Jogadores : %i\n", quantPlayers);
 	        }
 
 			al_flip_display();

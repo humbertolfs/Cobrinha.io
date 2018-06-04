@@ -28,9 +28,14 @@ typedef struct direc
 typedef struct DADOS
 {
     float x, y;
-    int r, g, b, pontos, quantPlayers;
+    int r, g, b, pontos;
     float orientacao[25];
-}DADOS;
+} DADOS;
+
+typedef struct sync
+{
+	int numPlayers;
+} sync;
 
 //Funções Centrais da Allegro
 bool coreInit();

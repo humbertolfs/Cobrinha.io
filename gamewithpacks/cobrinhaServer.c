@@ -3,6 +3,7 @@
 
 DADOS packet_server[maxPlayers];
 direc pack_server;
+sync syncy;
 int l;
 
 enum directions { UP, DOWN, LEFT, RIGHT };
@@ -28,7 +29,7 @@ int main()
 
     orientation = (int *) malloc(1 * sizeof(int));
     orientation_rad = (float *) malloc(1 * sizeof(float));
-    packet_server[0].quantPlayers = 0;
+    syncy.numPlayers = 0;
     *orientation = 0;
     *orientation_rad = 0;
 
@@ -41,7 +42,7 @@ int main()
 
         if(id != NO_CONNECTION)
         {
-            printf("Alguem se Conectou com ID %d\n", id);
+            printf("Alguem se Conectou com ID : %d\n", id);
             quantPlayers = id;
             if(quantPlayers == 0)
             {
@@ -56,19 +57,18 @@ int main()
                 {
                     packet_server[id].orientacao[count] = 0;
                 }
+
             }else if(quantPlayers > 0){
-                    orientation = (int *) realloc(orientation, (quantPlayers) * sizeof(int));
-                    orientation_rad = (float *) realloc(orientation_rad, (quantPlayers) * sizeof(float));
+                    orientation = (int *) realloc(orientation, (quantPlayers+1) * sizeof(int));
+                    orientation_rad = (float *) realloc(orientation_rad, (quantPlayers+1) * sizeof(float));
                     orientation[quantPlayers] = 0;
                     orientation_rad[quantPlayers] = 0;
 
                     packet_server[id].x = 2000;
                     packet_server[id].y = 2000;
 
-                    for(l = 0; l <= quantPlayers; l++)
-                    {
-                        packet_server[l].quantPlayers = quantPlayers;
-                    }
+                    syncy.numPlayers = quantPlayers;
+
                     for(l=0; l<25; l++)
                     {
                         packet_server[id].orientacao[l] = -1;
@@ -83,14 +83,11 @@ int main()
         }
             
         for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
-        {   
-            //printf("%i\n", idAtual);
+        {
             retorno = recvMsgFromClient(&pack_server, idAtual, WAIT_FOR_IT);
             if(retorno.status == MESSAGE_OK)
             {   
                 id = retorno.client_id;
-                
-                printf("Recebi algo de %i/%i :%i %i\n",id, idAtual, pack_server.pressed, pack_server.dir);
 
                 if (pack_server.pressed)
                 {
@@ -127,9 +124,10 @@ int main()
             }
         }
 
+        broadcast(&syncy, sizeof(sync));
+
         for(z = 0; z <= quantPlayers; z++)
-        {   
-            //printf("%i\n", quantPlayers);
+        {
             broadcast(&packet_server[z], sizeof(DADOS));
         }
 
