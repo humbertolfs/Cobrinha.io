@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_color.h>
@@ -9,41 +12,60 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <time.h>
+
+// Structs
+typedef struct
+{
+	char id;
+	float x;
+	float y;
+	float radius;
+	char skin;
+	short int *orientation;
+	short int score;
+} Snake;
 
 // Funções do jogo
 bool initialize();
 void cameraUpdate(int *cameraPosition, int x, int y);
 void redrawBackground();
-int *getSkinRGB(char skin);
-void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b);
-void drawChar(float pos_x, float pos_y, float raio, char skin, float *orientacao_array, int pontuacao);
-void drawEnemy(float pos_x, float pos_y, float raio, char skin, float *orientacao_array, int pontuacao_inimigo, int pontuacao_principal);
+void getSkinRGB(char skin, int ret[3]);
+void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b, int a);
+void drawChar(Snake character);
+void drawEnemy(Snake enemy);
+void drawFood();
 
 // Variáveis de controle
-float x = 2000, y = 2000;
+int *eatedFoodsX = NULL;
+int *eatedFoodsY = NULL;
+int eFSize = 0;
 int cameraPosition[2] = { 0, 0 };
 int orientation = 0;
-float orientation_rad = 0;
-float *orientation_array = NULL;
-int worldWidth = 4950;
-int worldHeight = 4350;
+int worldWidth = 2000;
+int worldHeight = 2000;
 int screenWidth = 1280;
 int screenHeight = 720;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int dir = LEFT;
-int moveSpeed = 2;
+float moveSpeed = 2;
 const float FPS = 60.0;
-char name[19];
+char name[6];
 char ip[16];
+Snake player;
+int seed = 3;
+bool scored = false;
+bool dead = false;
 
 // Variáveis do Allegro
 ALLEGRO_KEYBOARD_STATE keyState;
 ALLEGRO_TRANSFORM *camera;
-ALLEGRO_EVENT_QUEUE *event_queue;
+ALLEGRO_EVENT_QUEUE *event_queue = NULL;
 ALLEGRO_DISPLAY *display;
 ALLEGRO_BITMAP  *background;
 ALLEGRO_TIMER *timer;
 ALLEGRO_FONT *raleway16;
+ALLEGRO_FONT *raleway48;
 
 
 int main(void)
@@ -57,24 +79,23 @@ int main(void)
 	bool escPlay = false;
 	bool tbSelected = false;
 	bool tb2Selected = false;
-	char selectedSkin = 1, totalSkins = 5, nextSkin, previousSkin;
+	char selectedSkin = 1, totalSkins = 5, nextSkin = 2, previousSkin = 5;
 
-	// Loop do jogo
+	// ###############################################################
+	// #						Loop do jogo						 #
+	// ###############################################################
+
 	while (mainLoop)
 	{
-		// "Reset" das variáveis toda vez que volta pro começo do loop
+		// "Reset" das variáveis toda vez que volta pro começo do loop (MUDAR P FALSE E TRUE, RESPECTIVAMENTE DPS DOS TESTES)
 		bool mainScreen = true;
 		bool playScreen = false;
 
 		bool MO = false;
 
-		x = 2000;
-		y = 2000;
 		cameraPosition[0] = 0;
 		cameraPosition[1] = 0;
 		orientation = 0;
-		orientation_rad = 0;
-		orientation_array = NULL;
 
 		al_identity_transform(&camera);
 		al_translate_transform(&camera, 0, 0);
@@ -83,6 +104,10 @@ int main(void)
 		bool playMO = false;
 		bool leftMO = false;
 		bool rightMO = false;
+
+		// ###############################################################
+		// #					Loop do menu inicial					 #
+		// ###############################################################
 
 		while (mainScreen)
 		{
@@ -104,13 +129,13 @@ int main(void)
 				nextSkin = selectedSkin + 1;
 
 
-			logo = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\logo.png");
-			textbox = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\textbox.png");
-			play = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\play.png");
-			left = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\left.png");
-			right = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\right.png");
+			logo = al_load_bitmap("res/logo.png");
+			textbox = al_load_bitmap("res/textbox.png");
+			play = al_load_bitmap("res/play.png");
+			left = al_load_bitmap("res/left.png");
+			right = al_load_bitmap("res/right.png");
 
-			strcpy_s(path, 80, "C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\skins\\");
+			strcpy(path, "res/skins/");
 
 			if (previousSkin >= 10)
 			{
@@ -132,10 +157,10 @@ int main(void)
 				extra[5] = '\0';
 			}
 
-			strcat_s(path, 80, extra);
+			strcat(path, extra);
 			skin1 = al_load_bitmap(path);
 
-			strcpy_s(path, 80, "C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\skins\\");
+			strcpy(path, "res/skins/");
 
 			if (selectedSkin >= 10)
 			{
@@ -157,10 +182,10 @@ int main(void)
 				extra[5] = '\0';
 			}
 
-			strcat_s(path, 80, extra);
+			strcat(path, extra);
 			skin2 = al_load_bitmap(path);
 
-			strcpy_s(path, 80, "C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\skins\\");
+			strcpy(path, "res/skins/");
 
 			if (nextSkin >= 10)
 			{
@@ -182,7 +207,7 @@ int main(void)
 				extra[5] = '\0';
 			}
 
-			strcat_s(path, 80, extra);
+			strcat(path, extra);
 			skin3 = al_load_bitmap(path);
 
 			// A partir daqui se carrega as imagens (e se calcula a posição que elas serão exibidas)
@@ -231,11 +256,11 @@ int main(void)
 			al_draw_tinted_bitmap(skin1, al_map_rgba_f(1, 1, 1, 0.2), (screenWidth / 2) - (3 * al_get_bitmap_width(skin1) / 2) - 10, screenHeight*0.85, 0);
 			al_draw_bitmap(skin2, (screenWidth / 2) - al_get_bitmap_width(skin2) / 2, screenHeight*0.85, 0);
 			al_draw_tinted_bitmap(skin3, al_map_rgba_f(1, 1, 1, 0.2), (screenWidth / 2) + al_get_bitmap_width(skin3) / 2 + 10, screenHeight*0.85, 0);
-			ALLEGRO_FONT *raleway36 = al_load_font("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\ttf\\Raleway-Light.ttf", 36, 0);
+			ALLEGRO_FONT *raleway36 = al_load_font("res/ttf/Raleway-Light.ttf", 36, 0);
 			al_draw_text(raleway36, al_map_rgb(255, 255, 255), screenWidth / 2, screenHeight*0.75, ALLEGRO_ALIGN_CENTRE, "escolha sua skin");
 
 			if (!strlen(name))
-				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o nome");
+				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o login");
 
 			if (!strlen(ip))
 				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tb2pos[0] + al_get_bitmap_width(textbox) / 2, tb2pos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o IP");
@@ -278,7 +303,7 @@ int main(void)
 								|| (inputChar >= 65 && inputChar <= 90) // letra maiúscula
 								|| (inputChar >= 97 && inputChar <= 122) //letra minúscula
 								|| (inputChar == 95 || inputChar == 46) // underline e ponto
-								) && sizeName < 18) {
+								) && sizeName < 5) {
 								name[sizeName] = inputChar;
 								name[sizeName + 1] = '\0';
 							}
@@ -419,6 +444,17 @@ int main(void)
 							{
 								if (strlen(name) > 0 && strlen(ip) > 0)
 								{
+									// Inicializa o player
+									player.skin = selectedSkin;
+									player.id = 0;
+									player.score = 20;
+									player.radius = 20;
+									player.x = 2000;
+									player.y = 2000;
+									player.orientation = NULL;
+
+									// Vai para a tela do jogo
+									dead = false;
 									al_hide_mouse_cursor(display);
 									playScreen = true;
 									mainScreen = false;
@@ -438,27 +474,57 @@ int main(void)
 				}
 			}
 		}
-		
+
+		// ###############################################################
+		// #					Loop da tela de jogo					 #
+		// ###############################################################
+
 		while (playScreen)
 		{
 			bool draw = false;
 			int pressed = 0;
-			int score = 20;
 
 			int count;
 
-			orientation_array = malloc((score / 2) * sizeof(float));
+			// Cria os inimigos
+			Snake enemy1;
+			enemy1.id = 2;
+			enemy1.orientation = NULL;
+			enemy1.radius = 20;
+			enemy1.score = 30;
+			enemy1.skin = 3;
+			enemy1.x = 1800;
+			enemy1.y = 1800;
 
-			for (count = 0; count < (score / 2); count++)
-			{
-				orientation_array[count] = orientation_rad;
-			}
+			Snake enemy2;
+			enemy2.id = 3;
+			enemy2.orientation = NULL;
+			enemy2.radius = 20;
+			enemy2.score = 90;
+			enemy2.skin = 4;
+			enemy2.x = 1650;
+			enemy2.y = 1700;
+
+			player.orientation = malloc(((player.score / 20) + 5) * sizeof(float));
+			enemy1.orientation = malloc(((enemy1.score / 20) + 5) * sizeof(float));
+			enemy2.orientation = malloc(((enemy2.score / 20) + 5) * sizeof(float));
+
+			for (count = 0; count < (player.score / 20) + 5; count++)
+				player.orientation[count] = orientation;
+
+			for (count = 0; count < (enemy1.score / 20) + 5; count++)
+				enemy1.orientation[count] = orientation;
+
+			for (count = 0; count < (enemy2.score / 20) + 5; count++)
+				enemy2.orientation[count] = orientation;
 
 			al_start_timer(timer);
 
 			// Loop para deixar o programa esperando acontecer algum evento sem atualizar os gráficos
 			while (1)
 			{
+				if (!count)
+					count = (player.score / 20) + 4;
 				ALLEGRO_EVENT events;
 				al_wait_for_event(event_queue, &events);
 
@@ -504,7 +570,9 @@ int main(void)
 				// Eventos de timer
 				if (events.type == ALLEGRO_EVENT_TIMER)
 				{
-					orientation_array = realloc(orientation_array, (score / 2) * sizeof(float));
+					player.orientation = realloc(player.orientation, ((player.score / 20) + 5) * sizeof(float));
+					enemy1.orientation = realloc(enemy1.orientation, ((enemy1.score / 20) + 5) * sizeof(float));
+					enemy2.orientation = realloc(enemy2.orientation, ((enemy2.score / 20) + 5) * sizeof(float));
 
 					if (pressed)
 					{
@@ -524,14 +592,31 @@ int main(void)
 							orientation = 359;
 					}
 
-					orientation_rad = orientation * 3.1415926 / 180.0;
-					for (count = (score / 2) - 1; count > 0; count--)
-						orientation_array[count] = orientation_array[count - 1];
+					for (count = (player.score / 20) + 4; count > 0; count--)
+						player.orientation[count] = player.orientation[count - 1];
 
-					orientation_array[0] = orientation_rad;
+					for (count = (enemy1.score / 20) + 4; count > 0; count--)
+						enemy1.orientation[count] = enemy1.orientation[count - 1];
 
-					x += cos(orientation_rad) * moveSpeed;
-					y -= sin(orientation_rad) * moveSpeed;
+					for (count = (enemy2.score / 20) + 4; count > 0; count--)
+						enemy2.orientation[count] = enemy2.orientation[count - 1];
+
+					player.orientation[0] = orientation;
+					enemy1.orientation[0] = orientation;
+					enemy2.orientation[0] = orientation;
+
+					player.x += cos(orientation * 3.1415926 / 180.0) * moveSpeed;
+					player.y -= sin(orientation * 3.1415926 / 180.0) * moveSpeed;
+
+					if (player.x > worldWidth)
+						player.x -= worldWidth;
+					else if (player.x < 0)
+						player.x += worldWidth;
+
+					if (player.y > worldHeight)
+						player.y -= worldHeight;
+					else if (player.y < 0)
+						player.y += worldHeight;
 
 					draw = true;
 				}
@@ -539,20 +624,42 @@ int main(void)
 				// Atualização dos gráficos do jogo
 				if (draw)
 				{
-
-					cameraUpdate(cameraPosition, x, y);
+					cameraUpdate(cameraPosition, player.x, player.y);
 					al_identity_transform(&camera);
 					al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
 					al_use_transform(&camera);
 
 					redrawBackground();
 
-					drawChar(x, y, 20, selectedSkin, orientation_array, score);
-					drawEnemy(300, 200, 20, previousSkin, orientation_array, 10, score);
+					drawFood();
+
+					if (!dead)
+						drawChar(player);
+					else
+					{
+						redrawBackground();
+						al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2), ALLEGRO_ALIGN_CENTRE, "Fim de jogo :(");
+
+						al_flip_display();
+						al_rest(2.0);
+
+						escPlay = true;
+						playScreen = false;
+						break;
+					}
+
+					drawEnemy(enemy1);
+					drawEnemy(enemy2);
 
 					al_draw_text(raleway16, al_map_rgb(255, 255, 255), cameraPosition[0] + 15, cameraPosition[1] + 15, 0, "Aperte ESC para sair");
 
 					al_flip_display();
+
+					if (scored)
+					{
+						player.score++;
+						scored = false;
+					}
 
 					draw = false;
 				}
@@ -619,7 +726,8 @@ bool initialize()
 	//al_set_new_display_flags(ALLEGRO_FULLSCREEN);
 	al_set_new_display_flags(ALLEGRO_RESIZABLE);
 	al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
-	al_set_new_display_option(ALLEGRO_SAMPLES, 6, ALLEGRO_SUGGEST);	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+	al_set_new_display_option(ALLEGRO_SAMPLES, 6, ALLEGRO_SUGGEST);
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	al_hold_bitmap_drawing(true);
 
 	//ALLEGRO_DISPLAY_MODE disp_data;
@@ -643,11 +751,12 @@ bool initialize()
 	timer = al_create_timer(1.0 / FPS);
 	al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
-	raleway16 = al_load_font("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\ttf\\Raleway-Medium.ttf", 16, 0);
+	raleway16 = al_load_font("res/ttf/Raleway-Medium.ttf", 16, 0);
+	raleway48 = al_load_font("res/ttf/Raleway-Medium.ttf", 48, 0);
 
 	al_clear_to_color(al_map_rgb(30, 30, 30));
 
-	background = al_load_bitmap("C:\\Users\\Uanderson\\\Documents\\C\\Slither.io\\bg_tile.png");
+	background = al_load_bitmap("res/bg_tile.png");
 
 	if (!background)
 	{
@@ -657,46 +766,47 @@ bool initialize()
 
 	al_set_window_title(display, "Cobrinha.io");
 
-	strcpy_s(name, 19, "");
-	strcpy_s(ip, 16, "");
+	strcpy(name, "");
+	strcpy(ip, "");
+
+	srand((unsigned)time(NULL));
+
 	return true;
 }
 
-int *getSkinRGB(char skin)
+void getSkinRGB(char skin, int ret[3])
 {
 	// Retorna a cor da skin escolhida
-	int *color = malloc(3*sizeof(int));
 
 	switch (skin)
 	{
 	case 1:
-		color[0] = 249;
-		color[1] = 38;
-		color[2] = 114;
+		ret[0] = 249;
+		ret[1] = 38;
+		ret[2] = 114;
 		break;
 	case 2:
-		color[0] = 116;
-		color[1] = 38;
-		color[2] = 249;
+		ret[0] = 116;
+		ret[1] = 38;
+		ret[2] = 249;
 		break;
 	case 3:
-		color[0] = 68;
-		color[1] = 218;
-		color[2] = 76;
+		ret[0] = 68;
+		ret[1] = 218;
+		ret[2] = 76;
 		break;
 	case 4:
-		color[0] = 245;
-		color[1] = 114;
-		color[2] = 42;
+		ret[0] = 245;
+		ret[1] = 114;
+		ret[2] = 42;
 		break;
 	case 5:
-		color[0] = 245;
-		color[1] = 232;
-		color[2] = 42;
+		ret[0] = 245;
+		ret[1] = 232;
+		ret[2] = 42;
 		break;
 	}
 
-	return color;
 }
 
 void redrawBackground()
@@ -718,7 +828,7 @@ void cameraUpdate(int *cameraPosition, int x, int y)
 	if (cameraPosition[1] > worldHeight - screenHeight) cameraPosition[1] = worldHeight - screenHeight;
 }
 
-void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b)
+void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b, int a)
 {
 	// Desenha um círculo com anti-aliasing
 	int i;
@@ -727,34 +837,38 @@ void drawCircle(float pos_x, float pos_y, float raio, int r, int g, int b)
 		float t = (i - 1) / 5;
 		t = sqrt(t);
 		t = 1 - cos(t*3.1415926 / 2);
-		al_draw_filled_circle(pos_x, pos_y, raio + i * 0.2, al_map_rgba(r, g, b, (1 - t) * (255 / i)));
+		al_draw_filled_circle(pos_x, pos_y, raio + i * 0.2, al_map_rgba(r, g, b, (1 - t) * (a / i)));
 	}
 }
 
-void drawChar(float pos_x, float pos_y, float raio, char skin, float *orientacao_array, int pontuacao)
+void drawChar(Snake character)
 {
 	// Desenha a cobra do usuário
-	int i, tamanho = (int)pontuacao / 2;
+	int i, ballsNumber = (int)(character.score / 20) + 5;
 
-	int r = getSkinRGB(skin)[0];
-	int g = getSkinRGB(skin)[1];
-	int b = getSkinRGB(skin)[2];
+	int rgb[3];
+	getSkinRGB(character.skin, rgb);
 
 	float k;
-	for (i = tamanho - 1; i >= 0; i--)
+	for (i = ballsNumber - 1; i >= 0; i--)
 	{
 		// Desenha os segmentos da cobra
-		float orientacao_rad = orientacao_array[i];
-		k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
-		drawCircle(pos_x - (cos(orientacao_rad) * i * raio), pos_y + (sin(orientacao_rad) * i * raio), raio, (int)(k*r), (int)(k*g), (int)(k*b));
+		float rad_orientation = character.orientation[i] * 3.1415926 / 180.0;
+		float cos_rad = cos(rad_orientation);
+		float sin_rad = sin(rad_orientation);
+		k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
+		if (i == ballsNumber - 1)
+			drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * (character.score % 20)), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * (character.score % 20)), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+		else
+			drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
 
 		if (!i)
 		{
 			// Cálculos pros olhos
-			float xcos = cos(orientacao_rad) * ((raio)-(0.1 * 2 * raio) - (raio / 4));
-			float xsin = sin(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ycos = cos(orientacao_rad) * ((raio)-(0.2 * 2 * raio) - (raio / 4));
-			float ysin = sin(orientacao_rad) * -((raio)-(0.1 * 2 * raio) - (raio / 4));
+			float xcos = cos_rad * ((character.radius) - (0.2 * character.radius) - (character.radius / 4));
+			float xsin = sin_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
+			float ycos = cos_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
+			float ysin = sin_rad * -((character.radius) - (0.2 * character.radius) - (character.radius / 4));
 
 			float offset_x1 = xcos + xsin;
 			float offset_x2 = xcos - xsin;
@@ -762,41 +876,61 @@ void drawChar(float pos_x, float pos_y, float raio, char skin, float *orientacao
 			float offset_y2 = ysin - ycos;
 
 			// Desenha a parte branca dos olhos
-			drawCircle(pos_x + offset_x1, pos_y + offset_y1, (float)raio / 4, 255, 255, 255);
-			drawCircle(pos_x + offset_x2, pos_y + offset_y2, (float)raio / 4, 255, 255, 255);
+			drawCircle(character.x + offset_x1, character.y + offset_y1, character.radius / 4, 255, 255, 255, 255);
+			drawCircle(character.x + offset_x2, character.y + offset_y2, character.radius / 4, 255, 255, 255, 255);
 
 			// Desenha a parte preta dos olhos
-			drawCircle(pos_x + offset_x1 - (raio / 8), pos_y + offset_y1, (float)raio / 8, 0, 0, 0);
-			drawCircle(pos_x + offset_x2 - (raio / 8), pos_y + offset_y2, (float)raio / 8, 0, 0, 0);
+			drawCircle(character.x + offset_x1 - (character.radius / 8), character.y + offset_y1, character.radius / 8, 0, 0, 0, 255);
+			drawCircle(character.x + offset_x2 - (character.radius / 8), character.y + offset_y2, character.radius / 8, 0, 0, 0, 255);
 		}
 	}
 }
 
-void drawEnemy(float pos_x, float pos_y, float raio, char skin, float *orientacao_array, int pontuacao_inimigo, int pontuacao_principal)
+void drawEnemy(Snake enemy)
 {
-	// Desenha a cobra do adversário (escalonado de acordo com o tamanho da cobra do usuário)
-	float raio_scaled = raio * pontuacao_inimigo / pontuacao_principal;
-	int i, tamanho = (int)pontuacao_inimigo / 2;
+	// Desenha a cobra do adversário
+	int i, ballsNumber = (int)(enemy.score / 20) + 5;
 
-	int r = getSkinRGB(skin)[0];
-	int g = getSkinRGB(skin)[1];
-	int b = getSkinRGB(skin)[2];
+	int rgb[3];
+	getSkinRGB(enemy.skin, rgb);
 
 	float k;
-	for (i = tamanho - 1; i >= 0; i--)
+	for (i = ballsNumber - 1; i >= 0; i--)
 	{
 		// Desenha os segmentos da cobra
-		float orientacao_rad = orientacao_array[i];
-		k = (float)(2 * (tamanho - 1) - i) / (2 * (tamanho - 1));
-		drawCircle(pos_x - (cos(orientacao_rad) * i * raio_scaled), pos_y + (sin(orientacao_rad) * i * raio_scaled), raio_scaled, (int)(k*r), (int)(k*g), (int)(k*b));
+		float rad_orientation = enemy.orientation[i] * 3.1415926 / 180.0;
+		float cos_rad = cos(rad_orientation);
+		float sin_rad = sin(rad_orientation);
+		k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
+		if (i == ballsNumber - 1)
+			drawCircle(enemy.x - (cos_rad * (i - 1) * enemy.radius) - (cos_rad * (enemy.score % 20)), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * (enemy.score % 20)), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+		else
+			drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+
+
+		/*_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), enemy.x - (cos(rad_orientation) * i * enemy.radius) + enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), al_map_rgb(255, 0, 0), 1);
+		al_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) + enemy.radius, al_map_rgb(255, 0, 0), 1);
+
+		al_draw_line(player.x - enemy.radius, player.y, player.x + enemy.radius, player.y, al_map_rgb(255, 255, 255), 1);
+		al_draw_line(player.x, player.y - enemy.radius, player.x , player.y + enemy.radius, al_map_rgb(255, 255, 255), 1);*/
+
+
+
+		if ((enemy.x - (cos_rad * i * enemy.radius) - enemy.radius + 5 > player.x - player.radius &&
+			enemy.x - (cos_rad * i * enemy.radius) - enemy.radius - 5 < player.x + player.radius &&
+			enemy.y + (sin_rad * i * enemy.radius) > player.y - player.radius &&
+			enemy.y + (sin_rad * i * enemy.radius) < player.y + player.radius))
+		{
+			dead = true;
+		}
 
 		if (!i)
 		{
 			// Cálculos pros olhos
-			float xcos = cos(orientacao_rad) * ((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
-			float xsin = sin(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
-			float ycos = cos(orientacao_rad) * ((raio_scaled)-(0.2 * 2 * raio_scaled) - (raio_scaled / 4));
-			float ysin = sin(orientacao_rad) * -((raio_scaled)-(0.1 * 2 * raio_scaled) - (raio_scaled / 4));
+			float xcos = cos_rad * ((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
+			float xsin = sin_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
+			float ycos = cos_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
+			float ysin = sin_rad * -((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
 
 			float offset_x1 = xcos + xsin;
 			float offset_x2 = xcos - xsin;
@@ -804,12 +938,75 @@ void drawEnemy(float pos_x, float pos_y, float raio, char skin, float *orientaca
 			float offset_y2 = ysin - ycos;
 
 			// Desenha a parte branca dos olhos
-			drawCircle(pos_x + offset_x1, pos_y + offset_y1, (float)raio_scaled / 4, 255, 255, 255);
-			drawCircle(pos_x + offset_x2, pos_y + offset_y2, (float)raio_scaled / 4, 255, 255, 255);
+			drawCircle(enemy.x + offset_x1, enemy.y + offset_y1, (float)enemy.radius / 4, 255, 255, 255, 255);
+			drawCircle(enemy.x + offset_x2, enemy.y + offset_y2, (float)enemy.radius / 4, 255, 255, 255, 255);
 
 			// Desenha a parte preta dos olhos
-			drawCircle(pos_x + offset_x1 - (raio_scaled / 8), pos_y + offset_y1, (float)raio_scaled / 8, 0, 0, 0);
-			drawCircle(pos_x + offset_x2 - (raio_scaled / 8), pos_y + offset_y2, (float)raio_scaled / 8, 0, 0, 0);
+			drawCircle(enemy.x + offset_x1 - (enemy.radius / 8), enemy.y + offset_y1, (float)enemy.radius / 8, 0, 0, 0, 255);
+			drawCircle(enemy.x + offset_x2 - (enemy.radius / 8), enemy.y + offset_y2, (float)enemy.radius / 8, 0, 0, 0, 255);
+		}
+	}
+}
+
+void drawFood()
+{
+	srand(seed);
+	int i, j, k;
+	for (i = 0; i < worldWidth; i += 95)
+	{
+		for (j = 0; j < worldHeight; j += 110)
+		{
+			char eated = false;
+			for (k = 0; k < eFSize; k++)
+			{
+				if (eatedFoodsX[k] == i && eatedFoodsY[k] == j)
+				{
+					eated = true;
+				}
+			}
+
+			int rX = rand() % worldWidth;
+			int rY = rand() % worldHeight;
+
+			if (!eated)
+			{
+
+				if ((rX - 3 > player.x - player.radius &&
+					rX - 3 < player.x + player.radius &&
+					rY > player.y - player.radius &&
+					rY < player.y + player.radius)
+					||
+					(rX + 3 > player.x - player.radius &&
+						rX + 3 < player.x + player.radius &&
+						rY > player.y - player.radius &&
+						rY < player.y + player.radius)
+					||
+					(rX > player.x - player.radius &&
+						rX < player.x + player.radius &&
+						rY - 3 > player.y - player.radius &&
+						rY - 3 < player.y + player.radius)
+					||
+					(rX > player.x - player.radius &&
+						rX < player.x + player.radius &&
+						rY + 3 > player.y - player.radius &&
+						rY + 3 < player.y + player.radius))
+				{
+					// ENCOSTA EM UM PONTO
+					scored = true;
+					eFSize++;
+					eatedFoodsX = realloc(eatedFoodsX, eFSize * sizeof(int));
+					eatedFoodsY = realloc(eatedFoodsY, eFSize * sizeof(int));
+
+					eatedFoodsX[eFSize - 1] = i;
+					eatedFoodsY[eFSize - 1] = j;
+
+					//printf("Encostou no ponto x: %d y: %d\n", i, j);
+				}
+
+				if (rX >= cameraPosition[0] - 8 && rX <= cameraPosition[0] + screenWidth + 8 &&
+					rY >= cameraPosition[1] - 8 && rY <= cameraPosition[1] + screenHeight + 8)
+					drawCircle(rX, rY, 3, 255, 253, 224, 255);
+			}
 		}
 	}
 }
