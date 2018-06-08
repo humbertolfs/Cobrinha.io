@@ -4,10 +4,10 @@
 DADOS packet_server[maxPlayers];
 direc pack_server;
 sync syncy;
-int l;
+int l, alguem;
 
-int worldWidth = 4950;
-int worldHeight = 4350;
+int worldWidth = 2000;
+int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 float *orientation_rad;
@@ -48,8 +48,10 @@ int main()
             quantPlayers = id;
             if(quantPlayers == 0)
             {
-                packet_server[id].x = 2000;
-                packet_server[id].y = 2000;
+                alguem = 1;
+
+                packet_server[id].x = 1000;
+                packet_server[id].y = 1000;
 
                 for(l=0; l<25; l++)
                 {
@@ -66,8 +68,8 @@ int main()
                     orientation[quantPlayers] = 0;
                     orientation_rad[quantPlayers] = 0;
 
-                    packet_server[id].x = 2000;
-                    packet_server[id].y = 2000;
+                    packet_server[id].x = 1000;
+                    packet_server[id].y = 1000;
 
                     syncy.numPlayers = quantPlayers;
 
@@ -83,9 +85,11 @@ int main()
             
             sendMsgToClient(&id, sizeof(int), id);
         }
-            
-        //for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
-        //{
+        
+        if(alguem)
+        {
+            //for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
+            //{
             retorno = recvMsg(&pack_server);
             if(retorno.status != NO_MESSAGE)
             {   
@@ -95,12 +99,12 @@ int main()
                 {
                     switch (pack_server.dir)
                     {
-                    case RIGHT:
-                        orientation[id]--;
-                        break;
-                    case LEFT:
-                        orientation[id]++;
-                        break;
+                        case RIGHT:
+                            orientation[id]--;
+                            break;
+                        case LEFT:
+                            orientation[id]++;
+                            break;
                     }
 
                     if (orientation[id] == 360)
@@ -138,7 +142,6 @@ int main()
                 {
                     if(idAtual != id)
                     {
-                        orientation_rad[id] = orientation[id] * 3.1415926 / 180.0;
                         for (count = (score / 2) - 1; count > 0; count--)
                             packet_server[id].orientacao[count] = packet_server[id].orientacao[count-1];
 
@@ -169,14 +172,17 @@ int main()
 
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
-                    orientation_rad[id] = orientation[id] * 3.1415926 / 180.0;
-                        for (count = (score / 2) - 1; count > 0; count--)
-                            packet_server[id].orientacao[count] = packet_server[id].orientacao[count-1];
+                    // if (player.reto) continue;
 
-                    packet_server[id].orientacao[0] = orientation_rad[id];
+                    for (count = (score / 2) - 1; count > 0; count--)
+                        packet_server[idAtual].orientacao[count] = packet_server[idAtual].orientacao[count-1];
 
-                    (packet_server[idAtual].x) += cos(orientation_rad[id]) * moveSpeed;
-                    (packet_server[idAtual].y) -= sin(orientation_rad[id]) * moveSpeed;
+                    packet_server[idAtual].orientacao[0] = orientation_rad[idAtual];
+
+                    (packet_server[idAtual].x) += (float) cos(orientation_rad[idAtual]) * (float) moveSpeed;
+                    (packet_server[idAtual].y) -= (float) sin(orientation_rad[idAtual]) * (float) moveSpeed;
+
+                    //printf("x: %f    y: %f sen: %f\n", packet_server[idAtual].x, packet_server[idAtual].y, sin(orientation_rad[id]));
 
                     if (packet_server[idAtual].x > worldWidth)
                             packet_server[idAtual].x -= worldWidth;
@@ -188,22 +194,24 @@ int main()
                         else if (packet_server[idAtual].y < 0)
                             packet_server[idAtual].y += worldHeight;
 
-                    packet_server[id].r = 249;
-                    packet_server[id].g = 38;
-                    packet_server[id].b = 114;
+                    packet_server[idAtual].r = 249;
+                    packet_server[idAtual].g = 38;
+                    packet_server[idAtual].b = 114;
 
                     packet_server[idAtual].pontos = score;
                 }
             }
-        //}
+            //}
 
-        broadcast(&syncy, sizeof(sync));
+            sendMsgToClient(&syncy, sizeof(sync), 0);
 
-        for(z = 0; z <= quantPlayers; z++)
-        {
-            broadcast(&packet_server[z], sizeof(DADOS));
+            // for(z = 0; z <= quantPlayers; z++)
+            // {
+            //     sendMsgToClient(&packet_server[z], sizeof(DADOS), 0);
+            // }
+            sendMsgToClient(&packet_server[0], sizeof(DADOS), 0);
         }
-
+        
         al_flip_display();
         al_clear_to_color(al_map_rgb(0, 0, 0));
         FPSLimit();

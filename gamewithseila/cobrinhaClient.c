@@ -14,10 +14,10 @@ const float FPS = 60.0;
 int myid, enemyid, l, z, quantPlayers;
 int retorno, tempo;
 
-int worldWidth = 4950;
-int worldHeight = 4350;
-int screenWidth = 1280;
-int screenHeight = 720;
+int worldWidth = 2000;
+int worldHeight = 2000;
+int screenWidth = 960;
+int screenHeight = 640;
 int cameraPosition[2] = { 0, 0 };
 
 DADOS packet[maxPlayers];
@@ -65,94 +65,90 @@ int main(void)
     	printf("Meu id eh %i\n", myid);
 	}
 
-	al_start_timer(timer);
+	//al_start_timer(timer);
+
+	draw = 1;
 
 	while (!done)
 	{
 		// EVENTOS
-		ALLEGRO_EVENT events;
-		al_wait_for_event(event_queue, &events);
+		startTimer();
 
-		if (events.type == ALLEGRO_EVENT_KEY_DOWN)
-		{
-			switch (events.keyboard.keycode)
-			{
-				case ALLEGRO_KEY_RIGHT:
-					pack.dir = RIGHT;
-					pack.pressed = 1;
-					break;
-				case ALLEGRO_KEY_LEFT:
-					pack.dir = LEFT;
-					pack.pressed = 2;
-					break;
-				case ALLEGRO_KEY_ESCAPE:
-					done = true;
-					break;
-			}
-		}
-		
-		if (events.type == ALLEGRO_EVENT_KEY_UP)
-		{
-			switch (events.keyboard.keycode)
-			{
-				case ALLEGRO_KEY_RIGHT:
-					if (pack.pressed == 1)
-						pack.pressed = 0;
-					break;
-				case ALLEGRO_KEY_LEFT:
-					if (pack.pressed == 2)
-						pack.pressed = 0;
-					break;
-			}
-		}
+		while (!al_is_event_queue_empty(event_queue)) {
+				ALLEGRO_EVENT events;
+				al_wait_for_event(event_queue, &events);
 
-		if (events.type == ALLEGRO_EVENT_TIMER)
-		{	
-			tempo++;
-			if (pack.pressed)
-				sendMsgToServer(&pack, sizeof(direc));
-			draw = true;
-		}
-
-		if (draw)
-		{	
-			// ATUALIZAÇÃO DA IMAGEM
-			cameraUpdate(cameraPosition, packet[myid].x, packet[myid].y);
-			al_identity_transform(&camera);
-			al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
-			al_use_transform(&camera);
-
-			redrawBackground();
-
-			retorno = recvMsgFromServer(&syncy, DONT_WAIT);
-			if(retorno != NO_MESSAGE)
-			{
-				quantPlayers = syncy.numPlayers;
-				for(z = 0; z <= quantPlayers; z++)
-		        {	
-		        	recvMsgFromServer(&packet[z], WAIT_FOR_IT);
-		        }
-			} else {
-				for(z = 0; z <= quantPlayers; z++)
+				if (events.type == ALLEGRO_EVENT_KEY_DOWN)
 				{
-					(packet[z].x)++;
-					(packet[z].y)++;
+					switch (events.keyboard.keycode)
+					{
+						case ALLEGRO_KEY_RIGHT:
+							pack.dir = RIGHT;
+							pack.pressed = 1;
+							break;
+						case ALLEGRO_KEY_LEFT:
+							pack.dir = LEFT;
+							pack.pressed = 2;
+							break;
+						case ALLEGRO_KEY_ESCAPE:
+							done = true;
+							break;
+					}
 				}
-			}
 
-	        drawChar(packet[myid].x, packet[myid].y, 20, packet[myid].r, packet[myid].g, packet[myid].b, packet[myid].orientacao, packet[myid].pontos);
-	        for(z = 0; z <= quantPlayers; z++)
-	        {	
-	       		if(z != myid)
-	       		{
-	        		drawEnemy(packet[z].x, packet[z].y, 20, packet[z].r, packet[z].g, packet[z].b, packet[z].orientacao, packet[z].pontos, packet[myid].pontos);
-	        	}
-	        }
+				if (events.type == ALLEGRO_EVENT_KEY_UP)
+				{
+					pack.pressed = 0;
+				}
 
-			al_flip_display();
+				if (pack.pressed) sendMsgToServer(&pack, sizeof(direc));
 
-			draw = false;
+				// if (events.type == ALLEGRO_EVENT_TIMER)
+				// {	
+				// 	tempo++;
+				// 	if (pack.pressed)
+				// 		sendMsgToServer(&pack, sizeof(direc));
+				// 	draw = true;
+				// }
+
+				// draw = 1;
 		}
+
+		// ATUALIZAÇÃO DA IMAGEM
+		cameraUpdate(cameraPosition, packet[myid].x, packet[myid].y);
+		al_identity_transform(&camera);
+		al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
+		al_use_transform(&camera);
+
+		redrawBackground();
+
+		if (recvMsgFromServer(&syncy, DONT_WAIT) == sizeof(syncy)) {
+			quantPlayers = syncy.numPlayers;
+
+			for(z = 0; z <= quantPlayers; z++)
+	        {	
+	        	recvMsgFromServer(&packet[z], WAIT_FOR_IT);
+	        }
+		} else {
+			for(z = 0; z <= quantPlayers; z++)
+			{
+				(packet[z].x)++;
+				(packet[z].y)++;
+			}
+		}
+
+        drawChar(packet[myid].x, packet[myid].y, 20, packet[myid].r, packet[myid].g, packet[myid].b, packet[myid].orientacao, packet[myid].pontos);
+        for(z = 0; z <= quantPlayers; z++)
+        {	
+       		if(z != myid)
+       		{
+        		drawEnemy(packet[z].x, packet[z].y, 20, packet[z].r, packet[z].g, packet[z].b, packet[z].orientacao, packet[z].pontos, packet[myid].pontos);
+        	}
+        }
+
+        al_flip_display();
+        al_clear_to_color(al_map_rgb(0, 0, 0));
+        FPSLimit();
 	}
 
 	al_destroy_display(display);
