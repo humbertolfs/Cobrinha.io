@@ -26,6 +26,12 @@ typedef struct
 	short int score;
 } Snake;
 
+// Funções para controle da quantidade de frames por segundo
+void startTimer();
+double getTimer();
+void FPSLimit();
+double startingTime;
+
 // Funções do jogo
 bool initialize();
 void cameraUpdate(int *cameraPosition, int x, int y);
@@ -442,6 +448,10 @@ int main(void)
 							}
 							else if (events.mouse.x >= playpos[0] && events.mouse.x <= playpos[0] + al_get_bitmap_width(play) && events.mouse.y >= playpos[1] && events.mouse.y <= playpos[1] + al_get_bitmap_height(play))
 							{
+								// Evento de clique no botão de jogar
+								// Aqui deve ficar a parte de conexão com o servidor, casos de erro de conexão, etc.
+
+								//Verifica se a string do nome não está vazia e nem o IP
 								if (strlen(name) > 0 && strlen(ip) > 0)
 								{
 									// Inicializa o player
@@ -449,8 +459,8 @@ int main(void)
 									player.id = 0;
 									player.score = 20;
 									player.radius = 20;
-									player.x = 2000;
-									player.y = 2000;
+									player.x = 500;
+									player.y = 500;
 									player.orientation = NULL;
 
 									// Vai para a tela do jogo
@@ -523,146 +533,131 @@ int main(void)
 			// Loop para deixar o programa esperando acontecer algum evento sem atualizar os gráficos
 			while (1)
 			{
-				if (!count)
-					count = (player.score / 20) + 4;
-				ALLEGRO_EVENT events;
-				al_wait_for_event(event_queue, &events);
+				startTimer();
 
-				// Eventos de apertar de tecla
-				if (events.type == ALLEGRO_EVENT_KEY_DOWN)
+				// A verificação das teclas acontece sem o uso de eventos para reduzir o lag
+				ALLEGRO_KEYBOARD_STATE keyState;
+				al_get_keyboard_state(&keyState);
+
+				if (al_key_down(&keyState, ALLEGRO_KEY_ESCAPE))
 				{
-					if (events.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-					{
-						escPlay = true;
-						playScreen = false;
-						break;
-					}
-
-					switch (events.keyboard.keycode)
-					{
-					case ALLEGRO_KEY_RIGHT:
-						dir = RIGHT;
-						pressed = 1;
-						break;
-					case ALLEGRO_KEY_LEFT:
-						dir = LEFT;
-						pressed = 2;
-						break;
-					}
+					escPlay = true;
+					playScreen = false;
+					break;
 				}
 
-				// Eventos de soltar de tecla
-				if (events.type == ALLEGRO_EVENT_KEY_UP)
+				if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pressed != 1)
 				{
-					switch (events.keyboard.keycode)
+					dir = RIGHT;
+					pressed = 1;
+				}
+				else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 2)
+				{
+					dir = LEFT;
+					pressed = 2;
+				}
+				else if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && !al_key_down(&keyState, ALLEGRO_KEY_LEFT))
+				{
+					pressed = 0;
+				}
+			
+				// Realoca o vetor de orientação
+				player.orientation = realloc(player.orientation, ((player.score / 20) + 5) * sizeof(float));
+				enemy1.orientation = realloc(enemy1.orientation, ((enemy1.score / 20) + 5) * sizeof(float));
+				enemy2.orientation = realloc(enemy2.orientation, ((enemy2.score / 20) + 5) * sizeof(float));
+
+				// Verifica se está pressionado
+				if (pressed)
+				{
+					switch (dir)
 					{
-					case ALLEGRO_KEY_RIGHT:
-						if (pressed == 1)
-							pressed = 0;
+					case RIGHT:
+						orientation--;
 						break;
-					case ALLEGRO_KEY_LEFT:
-						if (pressed == 2)
-							pressed = 0;
+					case LEFT:
+						orientation++;
 						break;
 					}
+
+					if (orientation == 360)
+						orientation = 0;
+					else if (orientation == -1)
+						orientation = 359;
 				}
 
-				// Eventos de timer
-				if (events.type == ALLEGRO_EVENT_TIMER)
-				{
-					player.orientation = realloc(player.orientation, ((player.score / 20) + 5) * sizeof(float));
-					enemy1.orientation = realloc(enemy1.orientation, ((enemy1.score / 20) + 5) * sizeof(float));
-					enemy2.orientation = realloc(enemy2.orientation, ((enemy2.score / 20) + 5) * sizeof(float));
+				// Atualiza a orientação de cada bola de acordo com a anterior
+				for (count = (player.score / 20) + 4; count > 0; count--)
+					player.orientation[count] = player.orientation[count - 1];
 
-					if (pressed)
-					{
-						switch (dir)
-						{
-						case RIGHT:
-							orientation--;
-							break;
-						case LEFT:
-							orientation++;
-							break;
-						}
+				for (count = (enemy1.score / 20) + 4; count > 0; count--)
+					enemy1.orientation[count] = enemy1.orientation[count - 1];
 
-						if (orientation == 360)
-							orientation = 0;
-						else if (orientation == -1)
-							orientation = 359;
-					}
+				for (count = (enemy2.score / 20) + 4; count > 0; count--)
+					enemy2.orientation[count] = enemy2.orientation[count - 1];
 
-					for (count = (player.score / 20) + 4; count > 0; count--)
-						player.orientation[count] = player.orientation[count - 1];
+				// Coloca a nova orientação na primeira bola
+				player.orientation[0] = orientation;
+				enemy1.orientation[0] = orientation;
+				enemy2.orientation[0] = orientation;
 
-					for (count = (enemy1.score / 20) + 4; count > 0; count--)
-						enemy1.orientation[count] = enemy1.orientation[count - 1];
+				// Move a cobra
+				player.x += cos(orientation * 3.1415926 / 180.0) * moveSpeed;
+				player.y -= sin(orientation * 3.1415926 / 180.0) * moveSpeed;
 
-					for (count = (enemy2.score / 20) + 4; count > 0; count--)
-						enemy2.orientation[count] = enemy2.orientation[count - 1];
+				// Faz a cobra aparecer do outro lado do mapa se passar dos limites da tela
+				if (player.x > worldWidth)
+					player.x -= worldWidth;
+				else if (player.x < 0)
+					player.x += worldWidth;
 
-					player.orientation[0] = orientation;
-					enemy1.orientation[0] = orientation;
-					enemy2.orientation[0] = orientation;
+				if (player.y > worldHeight)
+					player.y -= worldHeight;
+				else if (player.y < 0)
+					player.y += worldHeight;
 
-					player.x += cos(orientation * 3.1415926 / 180.0) * moveSpeed;
-					player.y -= sin(orientation * 3.1415926 / 180.0) * moveSpeed;
-
-					if (player.x > worldWidth)
-						player.x -= worldWidth;
-					else if (player.x < 0)
-						player.x += worldWidth;
-
-					if (player.y > worldHeight)
-						player.y -= worldHeight;
-					else if (player.y < 0)
-						player.y += worldHeight;
-
-					draw = true;
-				}
 
 				// Atualização dos gráficos do jogo
-				if (draw)
+				cameraUpdate(cameraPosition, player.x, player.y);
+				al_identity_transform(&camera);
+				al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
+				al_use_transform(&camera);
+
+				redrawBackground();
+
+				drawFood();
+
+				// Verifica se a cobra morreu
+				if (!dead)
+					drawChar(player);
+				else
 				{
-					cameraUpdate(cameraPosition, player.x, player.y);
-					al_identity_transform(&camera);
-					al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
-					al_use_transform(&camera);
-
 					redrawBackground();
-
-					drawFood();
-
-					if (!dead)
-						drawChar(player);
-					else
-					{
-						redrawBackground();
-						al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2), ALLEGRO_ALIGN_CENTRE, "Fim de jogo :(");
-
-						al_flip_display();
-						al_rest(2.0);
-
-						escPlay = true;
-						playScreen = false;
-						break;
-					}
-
-					drawEnemy(enemy1);
-					drawEnemy(enemy2);
-
-					al_draw_text(raleway16, al_map_rgb(255, 255, 255), cameraPosition[0] + 15, cameraPosition[1] + 15, 0, "Aperte ESC para sair");
+					al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2), ALLEGRO_ALIGN_CENTRE, "Fim de jogo :(");
 
 					al_flip_display();
+					al_rest(2.0);
 
-					if (scored)
-					{
-						player.score++;
-						scored = false;
-					}
-
-					draw = false;
+					escPlay = true;
+					playScreen = false;
+					break;
 				}
+
+				drawEnemy(enemy1);
+				drawEnemy(enemy2);
+
+				al_draw_text(raleway16, al_map_rgb(255, 255, 255), cameraPosition[0] + 15, cameraPosition[1] + 15, 0, "Aperte ESC para sair");
+
+				al_flip_display();
+
+				// Aumenta a pontuação, caso tenha comido
+				if (scored)
+				{
+					player.score++;
+					scored = false;
+				}
+
+				// Limita o FPS
+        		FPSLimit();
 			}
 		}
 	}
@@ -1009,4 +1004,22 @@ void drawFood()
 			}
 		}
 	}
+}
+
+void startTimer()
+{
+    startingTime = al_get_time();
+}
+
+double getTimer()
+{
+    return al_get_time() - startingTime;
+}
+
+void FPSLimit()
+{
+	if (getTimer() < 1.0/FPS)
+    {
+        al_rest((1.0 / FPS) - getTimer());
+    }
 }
