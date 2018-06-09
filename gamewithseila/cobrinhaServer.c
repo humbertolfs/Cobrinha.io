@@ -57,14 +57,17 @@ int main()
                 {
                     packet_server[id].orientacao[l] = -1;
                 }
+
                 for (count = 0; count < (score / 2); count++)
                 {
                     packet_server[id].orientacao[count] = 0;
                 }
 
-            }else if(quantPlayers > 0){
+            } else if(quantPlayers > 0){
+
                     orientation = (int *) realloc(orientation, (quantPlayers+1) * sizeof(int));
                     orientation_rad = (float *) realloc(orientation_rad, (quantPlayers+1) * sizeof(float));
+
                     orientation[quantPlayers] = 0;
                     orientation_rad[quantPlayers] = 0;
 
@@ -77,6 +80,7 @@ int main()
                     {
                         packet_server[id].orientacao[l] = -1;
                     }
+
                     for (count = 0; count < (score / 2); count++)
                     {
                         packet_server[id].orientacao[count] = 0;
@@ -88,8 +92,6 @@ int main()
         
         if(alguem)
         {
-            //for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
-            //{
             retorno = recvMsg(&pack_server);
             if(retorno.status != NO_MESSAGE)
             {   
@@ -143,12 +145,12 @@ int main()
                     if(idAtual != id)
                     {
                         for (count = (score / 2) - 1; count > 0; count--)
-                            packet_server[id].orientacao[count] = packet_server[id].orientacao[count-1];
+                            packet_server[idAtual].orientacao[count] = packet_server[idAtual].orientacao[count-1];
 
-                        packet_server[id].orientacao[0] = orientation_rad[id];
+                        packet_server[idAtual].orientacao[0] = orientation_rad[idAtual];
 
-                        (packet_server[idAtual].x) += cos(orientation_rad[id]) * moveSpeed;
-                        (packet_server[idAtual].y) -= sin(orientation_rad[id]) * moveSpeed;
+                        (packet_server[idAtual].x) += cos(orientation_rad[idAtual]) * moveSpeed;
+                        (packet_server[idAtual].y) -= sin(orientation_rad[idAtual]) * moveSpeed;
 
                         if (packet_server[idAtual].x > worldWidth)
                                 packet_server[idAtual].x -= worldWidth;
@@ -160,9 +162,9 @@ int main()
                             else if (packet_server[idAtual].y < 0)
                                 packet_server[idAtual].y += worldHeight;
 
-                        packet_server[id].r = 249;
-                        packet_server[id].g = 38;
-                        packet_server[id].b = 114;
+                        packet_server[idAtual].r = 249;
+                        packet_server[idAtual].g = 38;
+                        packet_server[idAtual].b = 114;
 
                         packet_server[idAtual].pontos = score;
                     }
@@ -172,17 +174,14 @@ int main()
 
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
-                    // if (player.reto) continue;
 
                     for (count = (score / 2) - 1; count > 0; count--)
                         packet_server[idAtual].orientacao[count] = packet_server[idAtual].orientacao[count-1];
 
                     packet_server[idAtual].orientacao[0] = orientation_rad[idAtual];
 
-                    (packet_server[idAtual].x) += (float) cos(orientation_rad[idAtual]) * (float) moveSpeed;
-                    (packet_server[idAtual].y) -= (float) sin(orientation_rad[idAtual]) * (float) moveSpeed;
-
-                    //printf("x: %f    y: %f sen: %f\n", packet_server[idAtual].x, packet_server[idAtual].y, sin(orientation_rad[id]));
+                    (packet_server[idAtual].x) += cos(orientation_rad[idAtual]) * moveSpeed;
+                    (packet_server[idAtual].y) -= sin(orientation_rad[idAtual]) * moveSpeed;
 
                     if (packet_server[idAtual].x > worldWidth)
                             packet_server[idAtual].x -= worldWidth;
@@ -201,15 +200,14 @@ int main()
                     packet_server[idAtual].pontos = score;
                 }
             }
-            //}
 
-            sendMsgToClient(&syncy, sizeof(sync), 0);
+            broadcast(&syncy, sizeof(sync));
 
-            // for(z = 0; z <= quantPlayers; z++)
-            // {
-            //     sendMsgToClient(&packet_server[z], sizeof(DADOS), 0);
-            // }
-            sendMsgToClient(&packet_server[0], sizeof(DADOS), 0);
+            for(z = 0; z <= quantPlayers; z++)
+            {
+                broadcast(&packet_server[z], sizeof(DADOS));
+            }
+            
         }
         
         al_flip_display();

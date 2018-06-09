@@ -40,6 +40,7 @@ int main(void)
 
 	bool done = false;
 	bool draw = false;
+	pack.pressed = 0;
 
 	char ServerIP[30]={"127.0.0.1"};
     enum conn_ret_t ans = connectToServer(ServerIP);
@@ -65,54 +66,31 @@ int main(void)
     	printf("Meu id eh %i\n", myid);
 	}
 
-	//al_start_timer(timer);
-
-	draw = 1;
-
 	while (!done)
 	{
 		// EVENTOS
 		startTimer();
 
-		while (!al_is_event_queue_empty(event_queue)) {
-				ALLEGRO_EVENT events;
-				al_wait_for_event(event_queue, &events);
+		ALLEGRO_KEYBOARD_STATE keyState;
+		al_get_keyboard_state(&keyState);
 
-				if (events.type == ALLEGRO_EVENT_KEY_DOWN)
-				{
-					switch (events.keyboard.keycode)
-					{
-						case ALLEGRO_KEY_RIGHT:
-							pack.dir = RIGHT;
-							pack.pressed = 1;
-							break;
-						case ALLEGRO_KEY_LEFT:
-							pack.dir = LEFT;
-							pack.pressed = 2;
-							break;
-						case ALLEGRO_KEY_ESCAPE:
-							done = true;
-							break;
-					}
-				}
-
-				if (events.type == ALLEGRO_EVENT_KEY_UP)
-				{
-					pack.pressed = 0;
-				}
-
-				if (pack.pressed) sendMsgToServer(&pack, sizeof(direc));
-
-				// if (events.type == ALLEGRO_EVENT_TIMER)
-				// {	
-				// 	tempo++;
-				// 	if (pack.pressed)
-				// 		sendMsgToServer(&pack, sizeof(direc));
-				// 	draw = true;
-				// }
-
-				// draw = 1;
+		if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pack.pressed != 1)
+		{
+			pack.dir = RIGHT;
+			pack.pressed = 1;
 		}
+		else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pack.pressed != 2)
+		{
+			pack.dir = LEFT;
+			pack.pressed = 2;
+		}
+		else if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && !al_key_down(&keyState, ALLEGRO_KEY_LEFT))
+		{
+			pack.pressed = 0;
+		}
+
+		if (pack.pressed) 
+			sendMsgToServer(&pack, sizeof(direc));
 
 		// ATUALIZAÇÃO DA IMAGEM
 		cameraUpdate(cameraPosition, packet[myid].x, packet[myid].y);
@@ -122,7 +100,8 @@ int main(void)
 
 		redrawBackground();
 
-		if (recvMsgFromServer(&syncy, DONT_WAIT) == sizeof(syncy)) {
+		if (recvMsgFromServer(&syncy, DONT_WAIT) == sizeof(syncy)) 
+		{
 			quantPlayers = syncy.numPlayers;
 
 			for(z = 0; z <= quantPlayers; z++)
