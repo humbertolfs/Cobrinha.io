@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FPS2 60
+#define FPS 60
 #define maxPlayers 4
 
 double startingTime;
@@ -31,15 +31,20 @@ typedef struct direc
 	int dir, pressed;
 } direc;
 
-typedef struct
+typedef struct Snake
 {
 	float x;
 	float y;
 	float radius;
 	char skin;
-	short int *orientation;
+	short int orientacao[25];
 	short int score;
 } Snake;
+
+typedef struct corAux
+{
+	char cor;
+} corAux;
 
 typedef struct sync
 {

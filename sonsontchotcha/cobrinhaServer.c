@@ -1,9 +1,10 @@
 #include "libSocket/server.h"
 #include "libAllegro/AllegroCore.h"
 
-DADOS packet_server[maxPlayers];
+Snake player[maxPlayers];
 direc pack_server;
 sync syncy;
+corAux cory;
 int l, alguem;
 
 int worldWidth = 2000;
@@ -12,9 +13,8 @@ enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 float *orientation_rad;
 int moveSpeed = 2;
-const float FPS = 60.0;
 
-int count, z, idAtual, quantPlayers;
+int count, z, idAtual, quantPlayers, scoreAux;
 
 int main()
 {
@@ -30,10 +30,11 @@ int main()
     bool sair = false;
 
     orientation = (int *) malloc(1 * sizeof(int));
-    orientation_rad = (float *) malloc(1 * sizeof(float));
-    syncy.numPlayers = 0;
+
     *orientation = 0;
-    *orientation_rad = 0;
+
+    syncy.numPlayers = 0;
+    
 
     serverInit(maxPlayers);
 
@@ -50,18 +51,25 @@ int main()
             {
                 alguem = 1;
 
-                packet_server[id].x = 1000;
-                packet_server[id].y = 1000;
+                player[id].x = 1000;
+                player[id].y = 1000;
+                player[id].score = 20;
+                player[id].radius = 20;
 
-                for(l=0; l<25; l++)
+                for(l = 0; l < 5; l++)
                 {
-                    packet_server[id].orientacao[l] = -1;
+                    player[id].orientacao[l] = -1;
                 }
 
-                for (count = 0; count < (score / 2); count++)
+                for (count = 0; count < (player[id].score / 20) + 5; count++)
                 {
-                    packet_server[id].orientacao[count] = 0;
+                    player[id].orientacao[count] = 0;
                 }
+
+                sendMsgToClient(&id, sizeof(int), id);
+
+                recvMsgFromClient(&cory, id, WAIT_FOR_IT);
+                player[id].skin = cory.cor;
 
             } else if(quantPlayers > 0){
 
@@ -71,27 +79,44 @@ int main()
                     orientation[quantPlayers] = 0;
                     orientation_rad[quantPlayers] = 0;
 
-                    packet_server[id].x = 1000;
-                    packet_server[id].y = 1000;
+                    player[id].x = 1000;
+                    player[id].y = 1000;
+                    player[id].score = 20;
+                    player[id].radius = 20;
 
                     syncy.numPlayers = quantPlayers;
 
-                    for(l=0; l<25; l++)
+                    for(l = 0; l < 25; l++)
                     {
-                        packet_server[id].orientacao[l] = -1;
+                        player[id].orientacao[l] = -1;
                     }
 
-                    for (count = 0; count < (score / 2); count++)
+                    for (count = 0; count < (player[id].score / 20) + 5; count++)
                     {
-                        packet_server[id].orientacao[count] = 0;
+                        player[id].orientacao[count] = 0;
                     }
-                }
-            
-            sendMsgToClient(&id, sizeof(int), id);
+
+                    sendMsgToClient(&id, sizeof(int), id);
+                    
+                    recvMsgFromClient(&cory, id, WAIT_FOR_IT);
+                    player[id].skin = cory.cor;
+
+                }            
         }
         
         if(alguem)
-        {
+        {   
+
+            retorno = recvMsg(&scoreAux);
+            if(retorno.status != NO_MESSAGE && retorno.quant_bytes == sizeof(int))
+            {
+                id = retorno.client_id;
+                player[id].score = scoreAux;
+                if(player[id].score/20 == 1){
+                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
+                }
+            }
+
             retorno = recvMsg(&pack_server);
             if(retorno.status != NO_MESSAGE)
             {   
@@ -115,58 +140,45 @@ int main()
                         orientation[id] = 359;
                 }
 
-                orientation_rad[id] = orientation[id] * 3.1415926 / 180.0;
-                for (count = (score / 2) - 1; count > 0; count--)
-                    packet_server[id].orientacao[count] = packet_server[id].orientacao[count-1];
+                for (count = (player[id].score / 20) + 5; count > 0; count--)
+                    player[id].orientacao[count] = player[id].orientacao[count-1];
 
-                packet_server[id].orientacao[0] = orientation_rad[id];
+                player[id].orientacao[0] = orientation[id];
 
-                packet_server[id].x += cos(orientation_rad[id]) * moveSpeed;
-                packet_server[id].y -= sin(orientation_rad[id]) * moveSpeed;
+                player[id].x += cos(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
+                player[id].y -= sin(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
 
-                if (packet_server[id].x > worldWidth)
-                        packet_server[id].x -= worldWidth;
-                    else if (packet_server[id].x < 0)
-                        packet_server[id].x += worldWidth;
+                if (player[id].x > worldWidth)
+                        player[id].x -= worldWidth;
+                    else if (player[id].x < 0)
+                        player[id].x += worldWidth;
 
-                if (packet_server[id].y > worldHeight)
-                        packet_server[id].y -= worldHeight;
-                    else if (packet_server[id].y < 0)
-                        packet_server[id].y += worldHeight;
-
-                packet_server[id].r = 249;
-                packet_server[id].g = 38;
-                packet_server[id].b = 114;
-
-                packet_server[id].pontos = score;
+                if (player[id].y > worldHeight)
+                        player[id].y -= worldHeight;
+                    else if (player[id].y < 0)
+                        player[id].y += worldHeight;
 
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
                     if(idAtual != id)
                     {
-                        for (count = (score / 2) - 1; count > 0; count--)
-                            packet_server[idAtual].orientacao[count] = packet_server[idAtual].orientacao[count-1];
+                        for (count = (player[id].score / 20) + 5; count > 0; count--)
+                            player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
-                        packet_server[idAtual].orientacao[0] = orientation_rad[idAtual];
+                        player[idAtual].orientacao[0] = orientation[idAtual];
 
-                        (packet_server[idAtual].x) += cos(orientation_rad[idAtual]) * moveSpeed;
-                        (packet_server[idAtual].y) -= sin(orientation_rad[idAtual]) * moveSpeed;
+                        (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+                        (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
 
-                        if (packet_server[idAtual].x > worldWidth)
-                                packet_server[idAtual].x -= worldWidth;
-                            else if (packet_server[idAtual].x < 0)
-                                packet_server[idAtual].x += worldWidth;
+                        if (player[idAtual].x > worldWidth)
+                                player[idAtual].x -= worldWidth;
+                            else if (player[idAtual].x < 0)
+                                player[idAtual].x += worldWidth;
 
-                        if (packet_server[idAtual].y > worldHeight)
-                                packet_server[idAtual].y -= worldHeight;
-                            else if (packet_server[idAtual].y < 0)
-                                packet_server[idAtual].y += worldHeight;
-
-                        packet_server[idAtual].r = 249;
-                        packet_server[idAtual].g = 38;
-                        packet_server[idAtual].b = 114;
-
-                        packet_server[idAtual].pontos = score;
+                        if (player[idAtual].y > worldHeight)
+                                player[idAtual].y -= worldHeight;
+                            else if (player[idAtual].y < 0)
+                                player[idAtual].y += worldHeight;
                     }
                 }
 
@@ -175,29 +187,23 @@ int main()
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
 
-                    for (count = (score / 2) - 1; count > 0; count--)
-                        packet_server[idAtual].orientacao[count] = packet_server[idAtual].orientacao[count-1];
+                    for (count = (player[id].score / 20) + 5; count > 0; count--)
+                        player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
-                    packet_server[idAtual].orientacao[0] = orientation_rad[idAtual];
+                    player[idAtual].orientacao[0] = orientation[idAtual];
 
-                    (packet_server[idAtual].x) += cos(orientation_rad[idAtual]) * moveSpeed;
-                    (packet_server[idAtual].y) -= sin(orientation_rad[idAtual]) * moveSpeed;
+                    (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+                    (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
 
-                    if (packet_server[idAtual].x > worldWidth)
-                            packet_server[idAtual].x -= worldWidth;
-                        else if (packet_server[idAtual].x < 0)
-                            packet_server[idAtual].x += worldWidth;
+                    if (player[idAtual].x > worldWidth)
+                            player[idAtual].x -= worldWidth;
+                        else if (player[idAtual].x < 0)
+                            player[idAtual].x += worldWidth;
 
-                    if (packet_server[idAtual].y > worldHeight)
-                            packet_server[idAtual].y -= worldHeight;
-                        else if (packet_server[idAtual].y < 0)
-                            packet_server[idAtual].y += worldHeight;
-
-                    packet_server[idAtual].r = 249;
-                    packet_server[idAtual].g = 38;
-                    packet_server[idAtual].b = 114;
-
-                    packet_server[idAtual].pontos = score;
+                    if (player[idAtual].y > worldHeight)
+                            player[idAtual].y -= worldHeight;
+                        else if (player[idAtual].y < 0)
+                            player[idAtual].y += worldHeight;
                 }
             }
 
@@ -205,7 +211,7 @@ int main()
 
             for(z = 0; z <= quantPlayers; z++)
             {
-                broadcast(&packet_server[z], sizeof(DADOS));
+                broadcast(&player[z], sizeof(Snake));
             }
             
         }

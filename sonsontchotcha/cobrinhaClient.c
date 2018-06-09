@@ -15,6 +15,7 @@ void drawFood();
 Snake player[maxPlayers];
 direc pack;
 sync syncy;
+corAux cory;
 
 // Variáveis de controle
 int *eatedFoodsX = NULL;
@@ -29,7 +30,6 @@ int screenHeight = 720;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int dir = LEFT;
 float moveSpeed = 2;
-const float FPS = 60.0;
 char name[6];
 char ip[16];
 int seed = 3;
@@ -37,6 +37,7 @@ bool scored = false;
 bool dead = false;
 int myid, enemyid, l, z, quantPlayers;
 int retorno, tempo;
+int myscore;
 
 
 // Variáveis do Allegro
@@ -430,14 +431,34 @@ int main(void)
 								//Verifica se a string do nome não está vazia e nem o IP
 								if (strlen(name) > 0 && strlen(ip) > 0)
 								{
+									cory.cor = selectedSkin;
+
 									// Inicializa o player
-									player.skin = selectedSkin;
-									player.id = 0;
-									player.score = 20;
-									player.radius = 20;
-									player.x = 500;
-									player.y = 500;
-									player.orientation = NULL;
+									char ServerIP[30]={"127.0.0.1"};
+									enum conn_ret_t ans = connectToServer(ServerIP);
+
+								    if (ans != SERVER_UP) 
+									{
+									    if (ans == SERVER_DOWN) {
+									      puts("Server is down!");
+									      exit(1);
+									    } else if (ans == SERVER_FULL) {
+									      puts("Server is full!");
+									      exit(1);
+									    } else if (ans == SERVER_CLOSED) {
+									      puts("Server is closed for new connections!");
+									      exit(1);
+									    } else {
+									      puts("Server didn't respond to connection!");
+									      exit(1);
+									    }
+									} else {
+										recvMsgFromServer(&myid, WAIT_FOR_IT);
+
+								    	printf("Meu id eh %i\n", myid);
+
+								    	sendMsgToServer(&cory, sizeof(corAux));
+									}
 
 									// Vai para a tela do jogo
 									dead = false;
@@ -467,42 +488,7 @@ int main(void)
 
 		while (playScreen)
 		{
-			bool draw = false;
-			int pressed = 0;
-
-			int count;
-
-			// Cria os inimigos
-			Snake enemy1;
-			enemy1.id = 2;
-			enemy1.orientation = NULL;
-			enemy1.radius = 20;
-			enemy1.score = 30;
-			enemy1.skin = 3;
-			enemy1.x = 1800;
-			enemy1.y = 1800;
-
-			Snake enemy2;
-			enemy2.id = 3;
-			enemy2.orientation = NULL;
-			enemy2.radius = 20;
-			enemy2.score = 90;
-			enemy2.skin = 4;
-			enemy2.x = 1650;
-			enemy2.y = 1700;
-
-			player.orientation = malloc(((player.score / 20) + 5) * sizeof(float));
-			enemy1.orientation = malloc(((enemy1.score / 20) + 5) * sizeof(float));
-			enemy2.orientation = malloc(((enemy2.score / 20) + 5) * sizeof(float));
-
-			for (count = 0; count < (player.score / 20) + 5; count++)
-				player.orientation[count] = orientation;
-
-			for (count = 0; count < (enemy1.score / 20) + 5; count++)
-				enemy1.orientation[count] = orientation;
-
-			for (count = 0; count < (enemy2.score / 20) + 5; count++)
-				enemy2.orientation[count] = orientation;
+			pack.pressed = 0;
 
 			al_start_timer(timer);
 
@@ -522,91 +508,62 @@ int main(void)
 					break;
 				}
 
-				if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pressed != 1)
+				if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pack.pressed != 1)
 				{
-					dir = RIGHT;
-					pressed = 1;
+					pack.dir = RIGHT;
+					pack.pressed = 1;
 				}
-				else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 2)
+				else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pack.pressed != 2)
 				{
-					dir = LEFT;
-					pressed = 2;
+					pack.dir = LEFT;
+					pack.pressed = 2;
 				}
 				else if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && !al_key_down(&keyState, ALLEGRO_KEY_LEFT))
 				{
-					pressed = 0;
+					pack.pressed = 0;
 				}
-			
-				// Realoca o vetor de orientação
-				player.orientation = realloc(player.orientation, ((player.score / 20) + 5) * sizeof(float));
-				enemy1.orientation = realloc(enemy1.orientation, ((enemy1.score / 20) + 5) * sizeof(float));
-				enemy2.orientation = realloc(enemy2.orientation, ((enemy2.score / 20) + 5) * sizeof(float));
 
 				// Verifica se está pressionado
-				if (pressed)
+				if (pack.pressed)
 				{
-					switch (dir)
-					{
-					case RIGHT:
-						orientation--;
-						break;
-					case LEFT:
-						orientation++;
-						break;
-					}
-
-					if (orientation == 360)
-						orientation = 0;
-					else if (orientation == -1)
-						orientation = 359;
+					sendMsgToServer(&pack, sizeof(direc));
 				}
-
-				// Atualiza a orientação de cada bola de acordo com a anterior
-				for (count = (player.score / 20) + 4; count > 0; count--)
-					player.orientation[count] = player.orientation[count - 1];
-
-				for (count = (enemy1.score / 20) + 4; count > 0; count--)
-					enemy1.orientation[count] = enemy1.orientation[count - 1];
-
-				for (count = (enemy2.score / 20) + 4; count > 0; count--)
-					enemy2.orientation[count] = enemy2.orientation[count - 1];
-
-				// Coloca a nova orientação na primeira bola
-				player.orientation[0] = orientation;
-				enemy1.orientation[0] = orientation;
-				enemy2.orientation[0] = orientation;
-
-				// Move a cobra
-				player.x += cos(orientation * 3.1415926 / 180.0) * moveSpeed;
-				player.y -= sin(orientation * 3.1415926 / 180.0) * moveSpeed;
-
-				// Faz a cobra aparecer do outro lado do mapa se passar dos limites da tela
-				if (player.x > worldWidth)
-					player.x -= worldWidth;
-				else if (player.x < 0)
-					player.x += worldWidth;
-
-				if (player.y > worldHeight)
-					player.y -= worldHeight;
-				else if (player.y < 0)
-					player.y += worldHeight;
 
 
 				// Atualização dos gráficos do jogo
-				cameraUpdate(cameraPosition, player.x, player.y);
+				cameraUpdate(cameraPosition, player[myid].x, player[myid].y);
 				al_identity_transform(&camera);
 				al_translate_transform(&camera, -cameraPosition[0], -cameraPosition[1]);
 				al_use_transform(&camera);
 
 				redrawBackground();
 
+				if (recvMsgFromServer(&syncy, DONT_WAIT) == sizeof(syncy)) 
+				{
+					quantPlayers = syncy.numPlayers;
+
+					for(z = 0; z <= quantPlayers; z++)
+			        {	
+			        	recvMsgFromServer(&player[z], WAIT_FOR_IT);
+			        }
+				} else {
+					for(z = 0; z <= quantPlayers; z++)
+					{
+						(player[z].x)++;
+						(player[z].y)++;
+					}
+				}
+
+				myscore = player[myid].score;
+
 				drawFood();
 
 				// Verifica se a cobra morreu
 				if (!dead)
-					drawChar(player);
+					drawChar(player[myid]);
 				else
-				{
+				{	
+
 					redrawBackground();
 					al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2), ALLEGRO_ALIGN_CENTRE, "Fim de jogo :(");
 
@@ -618,8 +575,13 @@ int main(void)
 					break;
 				}
 
-				drawEnemy(enemy1);
-				drawEnemy(enemy2);
+				for(z = 0; z <= quantPlayers; z++)
+		        {	
+		       		if(z != myid)
+		       		{
+		        		drawEnemy(player[z]);
+		        	}
+		        }
 
 				al_draw_text(raleway16, al_map_rgb(255, 255, 255), cameraPosition[0] + 15, cameraPosition[1] + 15, 0, "Aperte ESC para sair");
 
@@ -628,7 +590,10 @@ int main(void)
 				// Aumenta a pontuação, caso tenha comido
 				if (scored)
 				{
-					player.score++;
+					myscore++;
+
+					sendMsgToServer(&myscore, sizeof(int));
+
 					scored = false;
 				}
 
@@ -823,36 +788,39 @@ void drawChar(Snake character)
 	float k;
 	for (i = ballsNumber - 1; i >= 0; i--)
 	{
-		// Desenha os segmentos da cobra
-		float rad_orientation = character.orientation[i] * 3.1415926 / 180.0;
-		float cos_rad = cos(rad_orientation);
-		float sin_rad = sin(rad_orientation);
-		k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
-		if (i == ballsNumber - 1)
-			drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * (character.score % 20)), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * (character.score % 20)), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-		else
-			drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-
-		if (!i)
+		if(character.orientacao[i] != -1)
 		{
-			// Cálculos pros olhos
-			float xcos = cos_rad * ((character.radius) - (0.2 * character.radius) - (character.radius / 4));
-			float xsin = sin_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
-			float ycos = cos_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
-			float ysin = sin_rad * -((character.radius) - (0.2 * character.radius) - (character.radius / 4));
+			// Desenha os segmentos da cobra
+			float rad_orientation = character.orientacao[i] * 3.1415926 / 180.0;
+			float cos_rad = cos(rad_orientation);
+			float sin_rad = sin(rad_orientation);
+			k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
+			if (i == ballsNumber - 1)
+				drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * (character.score % 20)), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * (character.score % 20)), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+			else
+				drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
 
-			float offset_x1 = xcos + xsin;
-			float offset_x2 = xcos - xsin;
-			float offset_y1 = ycos + ysin;
-			float offset_y2 = ysin - ycos;
+			if (!i)
+			{
+				// Cálculos pros olhos
+				float xcos = cos_rad * ((character.radius) - (0.2 * character.radius) - (character.radius / 4));
+				float xsin = sin_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
+				float ycos = cos_rad * ((character.radius) - (0.4 * character.radius) - (character.radius / 4));
+				float ysin = sin_rad * -((character.radius) - (0.2 * character.radius) - (character.radius / 4));
 
-			// Desenha a parte branca dos olhos
-			drawCircle(character.x + offset_x1, character.y + offset_y1, character.radius / 4, 255, 255, 255, 255);
-			drawCircle(character.x + offset_x2, character.y + offset_y2, character.radius / 4, 255, 255, 255, 255);
+				float offset_x1 = xcos + xsin;
+				float offset_x2 = xcos - xsin;
+				float offset_y1 = ycos + ysin;
+				float offset_y2 = ysin - ycos;
 
-			// Desenha a parte preta dos olhos
-			drawCircle(character.x + offset_x1 - (character.radius / 8), character.y + offset_y1, character.radius / 8, 0, 0, 0, 255);
-			drawCircle(character.x + offset_x2 - (character.radius / 8), character.y + offset_y2, character.radius / 8, 0, 0, 0, 255);
+				// Desenha a parte branca dos olhos
+				drawCircle(character.x + offset_x1, character.y + offset_y1, character.radius / 4, 255, 255, 255, 255);
+				drawCircle(character.x + offset_x2, character.y + offset_y2, character.radius / 4, 255, 255, 255, 255);
+
+				// Desenha a parte preta dos olhos
+				drawCircle(character.x + offset_x1 - (character.radius / 8), character.y + offset_y1, character.radius / 8, 0, 0, 0, 255);
+				drawCircle(character.x + offset_x2 - (character.radius / 8), character.y + offset_y2, character.radius / 8, 0, 0, 0, 255);
+			}
 		}
 	}
 }
@@ -868,53 +836,56 @@ void drawEnemy(Snake enemy)
 	float k;
 	for (i = ballsNumber - 1; i >= 0; i--)
 	{
-		// Desenha os segmentos da cobra
-		float rad_orientation = enemy.orientation[i] * 3.1415926 / 180.0;
-		float cos_rad = cos(rad_orientation);
-		float sin_rad = sin(rad_orientation);
-		k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
-		if (i == ballsNumber - 1)
-			drawCircle(enemy.x - (cos_rad * (i - 1) * enemy.radius) - (cos_rad * (enemy.score % 20)), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * (enemy.score % 20)), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-		else
-			drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-
-
-		/*_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), enemy.x - (cos(rad_orientation) * i * enemy.radius) + enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), al_map_rgb(255, 0, 0), 1);
-		al_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) + enemy.radius, al_map_rgb(255, 0, 0), 1);
-
-		al_draw_line(player.x - enemy.radius, player.y, player.x + enemy.radius, player.y, al_map_rgb(255, 255, 255), 1);
-		al_draw_line(player.x, player.y - enemy.radius, player.x , player.y + enemy.radius, al_map_rgb(255, 255, 255), 1);*/
-
-
-
-		if ((enemy.x - (cos_rad * i * enemy.radius) - enemy.radius + 5 > player.x - player.radius &&
-			enemy.x - (cos_rad * i * enemy.radius) - enemy.radius - 5 < player.x + player.radius &&
-			enemy.y + (sin_rad * i * enemy.radius) > player.y - player.radius &&
-			enemy.y + (sin_rad * i * enemy.radius) < player.y + player.radius))
+		if(enemy.orientacao[i] != -1)
 		{
-			dead = true;
-		}
+			// Desenha os segmentos da cobra
+			float rad_orientation = enemy.orientacao[i] * 3.1415926 / 180.0;
+			float cos_rad = cos(rad_orientation);
+			float sin_rad = sin(rad_orientation);
+			k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
+			if (i == ballsNumber - 1)
+				drawCircle(enemy.x - (cos_rad * (i - 1) * enemy.radius) - (cos_rad * (enemy.score % 20)), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * (enemy.score % 20)), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+			else
+				drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
 
-		if (!i)
-		{
-			// Cálculos pros olhos
-			float xcos = cos_rad * ((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
-			float xsin = sin_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
-			float ycos = cos_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
-			float ysin = sin_rad * -((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
 
-			float offset_x1 = xcos + xsin;
-			float offset_x2 = xcos - xsin;
-			float offset_y1 = ycos + ysin;
-			float offset_y2 = ysin - ycos;
+			/*_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), enemy.x - (cos(rad_orientation) * i * enemy.radius) + enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), al_map_rgb(255, 0, 0), 1);
+			al_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) + enemy.radius, al_map_rgb(255, 0, 0), 1);
 
-			// Desenha a parte branca dos olhos
-			drawCircle(enemy.x + offset_x1, enemy.y + offset_y1, (float)enemy.radius / 4, 255, 255, 255, 255);
-			drawCircle(enemy.x + offset_x2, enemy.y + offset_y2, (float)enemy.radius / 4, 255, 255, 255, 255);
+			al_draw_line(player[myid].x - enemy.radius, player[myid].y, player[myid].x + enemy.radius, player[myid].y, al_map_rgb(255, 255, 255), 1);
+			al_draw_line(player[myid].x, player[myid].y - enemy.radius, player[myid].x , player[myid].y + enemy.radius, al_map_rgb(255, 255, 255), 1);*/
 
-			// Desenha a parte preta dos olhos
-			drawCircle(enemy.x + offset_x1 - (enemy.radius / 8), enemy.y + offset_y1, (float)enemy.radius / 8, 0, 0, 0, 255);
-			drawCircle(enemy.x + offset_x2 - (enemy.radius / 8), enemy.y + offset_y2, (float)enemy.radius / 8, 0, 0, 0, 255);
+
+
+			if ((enemy.x - (cos_rad * i * enemy.radius) - enemy.radius + 5 > player[myid].x - player[myid].radius &&
+				enemy.x - (cos_rad * i * enemy.radius) - enemy.radius - 5 < player[myid].x + player[myid].radius &&
+				enemy.y + (sin_rad * i * enemy.radius) > player[myid].y - player[myid].radius &&
+				enemy.y + (sin_rad * i * enemy.radius) < player[myid].y + player[myid].radius))
+			{
+				dead = true;
+			}
+
+			if (!i)
+			{
+				// Cálculos pros olhos
+				float xcos = cos_rad * ((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
+				float xsin = sin_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
+				float ycos = cos_rad * ((enemy.radius) - (0.4 * enemy.radius) - (enemy.radius / 4));
+				float ysin = sin_rad * -((enemy.radius) - (0.2 * enemy.radius) - (enemy.radius / 4));
+
+				float offset_x1 = xcos + xsin;
+				float offset_x2 = xcos - xsin;
+				float offset_y1 = ycos + ysin;
+				float offset_y2 = ysin - ycos;
+
+				// Desenha a parte branca dos olhos
+				drawCircle(enemy.x + offset_x1, enemy.y + offset_y1, (float)enemy.radius / 4, 255, 255, 255, 255);
+				drawCircle(enemy.x + offset_x2, enemy.y + offset_y2, (float)enemy.radius / 4, 255, 255, 255, 255);
+
+				// Desenha a parte preta dos olhos
+				drawCircle(enemy.x + offset_x1 - (enemy.radius / 8), enemy.y + offset_y1, (float)enemy.radius / 8, 0, 0, 0, 255);
+				drawCircle(enemy.x + offset_x2 - (enemy.radius / 8), enemy.y + offset_y2, (float)enemy.radius / 8, 0, 0, 0, 255);
+			}
 		}
 	}
 }
@@ -942,25 +913,25 @@ void drawFood()
 			if (!eated)
 			{
 
-				if ((rX - 3 > player.x - player.radius &&
-					rX - 3 < player.x + player.radius &&
-					rY > player.y - player.radius &&
-					rY < player.y + player.radius)
+				if ((rX - 3 > player[myid].x - player[myid].radius &&
+					rX - 3 < player[myid].x + player[myid].radius &&
+					rY > player[myid].y - player[myid].radius &&
+					rY < player[myid].y + player[myid].radius)
 					||
-					(rX + 3 > player.x - player.radius &&
-						rX + 3 < player.x + player.radius &&
-						rY > player.y - player.radius &&
-						rY < player.y + player.radius)
+					(rX + 3 > player[myid].x - player[myid].radius &&
+						rX + 3 < player[myid].x + player[myid].radius &&
+						rY > player[myid].y - player[myid].radius &&
+						rY < player[myid].y + player[myid].radius)
 					||
-					(rX > player.x - player.radius &&
-						rX < player.x + player.radius &&
-						rY - 3 > player.y - player.radius &&
-						rY - 3 < player.y + player.radius)
+					(rX > player[myid].x - player[myid].radius &&
+						rX < player[myid].x + player[myid].radius &&
+						rY - 3 > player[myid].y - player[myid].radius &&
+						rY - 3 < player[myid].y + player[myid].radius)
 					||
-					(rX > player.x - player.radius &&
-						rX < player.x + player.radius &&
-						rY + 3 > player.y - player.radius &&
-						rY + 3 < player.y + player.radius))
+					(rX > player[myid].x - player[myid].radius &&
+						rX < player[myid].x + player[myid].radius &&
+						rY + 3 > player[myid].y - player[myid].radius &&
+						rY + 3 < player[myid].y + player[myid].radius))
 				{
 					// ENCOSTA EM UM PONTO
 					scored = true;

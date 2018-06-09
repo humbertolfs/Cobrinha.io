@@ -55,8 +55,8 @@ void startTimer()
 
 void FPSLimit()
 {
-	if (getTimer() < 1.0/FPS2)
+	if (getTimer() < 1.0/FPS)
     {
-        al_rest((1.0 / FPS2) - getTimer());
+        al_rest((1.0 / FPS) - getTimer());
     }
 }
