@@ -40,7 +40,6 @@ typedef struct Snake
 	short int orientacao[25];
 	short int score;
 	short int seed;
-	short int disc;
 } Snake;
 
 typedef struct corAux
@@ -50,7 +49,8 @@ typedef struct corAux
 
 typedef struct sync
 {
-	int numPlayers;
+	short int numPlayers;
+	short int disc[maxPlayers];
 } sync;
 
 //Funções Centrais da Allegro

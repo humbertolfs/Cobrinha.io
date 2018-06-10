@@ -11,7 +11,7 @@ int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 int moveSpeed = 2;
-int count, z, idAtual, quantPlayers, scoreAux, l, alguem;;
+int count, z, idAtual, quantPlayers, scoreAux, l, alguem;
 
 int main()
 {
@@ -34,7 +34,7 @@ int main()
 
     for(l = 0; l < maxPlayers; l++)
     {
-        player[l].disc = 0;
+        syncy.disc[l] = 0;
     }
     
     for(l = 0; l < maxPlayers; l++)
@@ -118,7 +118,8 @@ int main()
                 if(pack_server.dead)
                 {
                     disconnectClient(id);
-                    player[id].disc = 1;
+                    syncy.disc[id] = 1;
+                    pack_server.dead = 0;
                 }
 
                 player[id].score = pack_server.scoreAux;
@@ -165,7 +166,7 @@ int main()
 
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
-                    if(!player[idAtual].disc)
+                    if(!syncy.disc[idAtual])
                     {
                         if(idAtual != id)
                         {
@@ -194,7 +195,7 @@ int main()
 
                 for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
-                    if(!player[idAtual].disc)
+                    if(!syncy.disc[idAtual])
                     {
                         for (count = (player[id].score / 20) + 5; count > 0; count--)
                             player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
@@ -221,7 +222,7 @@ int main()
 
             for(z = 0; z <= quantPlayers; z++)
             {
-                if(!player[z].disc)
+                if(!syncy.disc[z])
                 {
                     broadcast(&player[z], sizeof(Snake));
                 }

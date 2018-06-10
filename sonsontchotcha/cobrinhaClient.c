@@ -55,7 +55,7 @@ int main(void)
 
 	for(l = 0; l < maxPlayers; l++)
     {
-        player[l].disc = 0;
+        syncy.disc[l] = 0;
     }
 
 	pack.dead = 0;
@@ -544,7 +544,7 @@ int main(void)
 
 					for(z = 0; z <= quantPlayers; z++)
 			        {	
-			        	if(!player[z].disc)
+			        	if(!syncy.disc[z])
                     	{
 			        		recvMsgFromServer(&player[z], WAIT_FOR_IT);
 			        	}
@@ -552,8 +552,11 @@ int main(void)
 				} else {
 					for(z = 0; z <= quantPlayers; z++)
 					{
-						(player[z].x)++;
-						(player[z].y)++;
+						if(!syncy.disc[z])
+                    	{
+							(player[z].x)++;
+							(player[z].y)++;
+						}
 					}
 				}
 
@@ -561,7 +564,7 @@ int main(void)
 
 				drawFood();
 
-				// Verifica se a cobra morreu
+				// Verifica se a cobra morreu00
 				if (!dead)
 					drawChar(player[myid]);
 				else
@@ -582,7 +585,7 @@ int main(void)
 
 				for(z = 0; z <= quantPlayers; z++)
 		        {	
-		        	if(!player[z].disc)
+		        	if(!syncy.disc[z])
                     {
 			       		if(z != myid)
 			       		{
