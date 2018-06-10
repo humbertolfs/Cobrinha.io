@@ -554,7 +554,7 @@ int main(void)
 					}
 				}
 
-				myscore = player[myid].score;
+				pack.scoreAux = player[myid].score;
 
 				drawFood();
 
@@ -590,9 +590,9 @@ int main(void)
 				// Aumenta a pontuação, caso tenha comido
 				if (scored)
 				{
-					myscore++;
+					pack.scoreAux++;
 
-					sendMsgToServer(&myscore, sizeof(int));
+					sendMsgToServer(&pack, sizeof(direc));
 
 					scored = false;
 				}

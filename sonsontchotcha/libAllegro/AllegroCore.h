@@ -28,7 +28,7 @@ ALLEGRO_EVENT_QUEUE *eventsQueue;
 
 typedef struct direc
 {
-	int dir, pressed;
+	int dir, pressed, scoreAux;
 } direc;
 
 typedef struct Snake

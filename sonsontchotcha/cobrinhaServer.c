@@ -106,21 +106,16 @@ int main()
         
         if(alguem)
         {   
-
-            retorno = recvMsg(&scoreAux);
-            if(retorno.status != NO_MESSAGE && retorno.quant_bytes == sizeof(int))
-            {
-                id = retorno.client_id;
-                player[id].score = scoreAux;
-                if(player[id].score/20 == 1){
-                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
-                }
-            }
-
             retorno = recvMsg(&pack_server);
             if(retorno.status != NO_MESSAGE)
             {   
                 id = retorno.client_id;
+                
+                player[id].score = pack_server.scoreAux;
+                if(player[id].score/20 == 1)
+                {
+                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
+                }
 
                 if (pack_server.pressed)
                 {
