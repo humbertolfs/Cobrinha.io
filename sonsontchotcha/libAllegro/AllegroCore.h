@@ -28,7 +28,7 @@ ALLEGRO_EVENT_QUEUE *eventsQueue;
 
 typedef struct direc
 {
-	int dir, pressed, scoreAux;
+	int dir, pressed, scoreAux, dead;
 } direc;
 
 typedef struct Snake
@@ -39,6 +39,8 @@ typedef struct Snake
 	char skin;
 	short int orientacao[25];
 	short int score;
+	short int seed;
+	short int disc;
 } Snake;
 
 typedef struct corAux

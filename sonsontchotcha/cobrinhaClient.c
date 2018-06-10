@@ -22,22 +22,17 @@ int *eatedFoodsX = NULL;
 int *eatedFoodsY = NULL;
 int eFSize = 0;
 int cameraPosition[2] = { 0, 0 };
-int orientation = 0;
 int worldWidth = 2000;
 int worldHeight = 2000;
 int screenWidth = 1280;
 int screenHeight = 720;
 enum directions { UP, DOWN, LEFT, RIGHT };
-int dir = LEFT;
 float moveSpeed = 2;
 char name[6];
 char ip[16];
-int seed = 3;
 bool scored = false;
 bool dead = false;
-int myid, enemyid, l, z, quantPlayers;
-int retorno, tempo;
-int myscore;
+int myid, enemyid, l, z, quantPlayers, retorno, tempo, myscore;
 
 
 // Variáveis do Allegro
@@ -58,6 +53,12 @@ int main(void)
 		return -1;
 	}
 
+	for(l = 0; l < maxPlayers; l++)
+    {
+        player[l].disc = 0;
+    }
+
+	pack.dead = 0;
 	bool mainLoop = true;
 	bool escPlay = false;
 	bool tbSelected = false;
@@ -78,7 +79,6 @@ int main(void)
 
 		cameraPosition[0] = 0;
 		cameraPosition[1] = 0;
-		orientation = 0;
 
 		al_identity_transform(&camera);
 		al_translate_transform(&camera, 0, 0);
@@ -544,7 +544,10 @@ int main(void)
 
 					for(z = 0; z <= quantPlayers; z++)
 			        {	
-			        	recvMsgFromServer(&player[z], WAIT_FOR_IT);
+			        	if(!player[z].disc)
+                    	{
+			        		recvMsgFromServer(&player[z], WAIT_FOR_IT);
+			        	}
 			        }
 				} else {
 					for(z = 0; z <= quantPlayers; z++)
@@ -563,6 +566,8 @@ int main(void)
 					drawChar(player[myid]);
 				else
 				{	
+					pack.dead = 1;
+					sendMsgToServer(&pack, sizeof(direc));
 
 					redrawBackground();
 					al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2), ALLEGRO_ALIGN_CENTRE, "Fim de jogo :(");
@@ -577,10 +582,13 @@ int main(void)
 
 				for(z = 0; z <= quantPlayers; z++)
 		        {	
-		       		if(z != myid)
-		       		{
-		        		drawEnemy(player[z]);
-		        	}
+		        	if(!player[z].disc)
+                    {
+			       		if(z != myid)
+			       		{
+			        		drawEnemy(player[z]);
+			        	}
+			        }
 		        }
 
 				al_draw_text(raleway16, al_map_rgb(255, 255, 255), cameraPosition[0] + 15, cameraPosition[1] + 15, 0, "Aperte ESC para sair");
@@ -892,7 +900,7 @@ void drawEnemy(Snake enemy)
 
 void drawFood()
 {
-	srand(seed);
+	srand(player[myid].seed);
 	int i, j, k;
 	for (i = 0; i < worldWidth; i += 95)
 	{
