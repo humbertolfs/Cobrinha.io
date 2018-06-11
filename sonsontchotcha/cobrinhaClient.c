@@ -466,9 +466,15 @@ int main(void)
 									} else {
 										recvMsgFromServer(&myid, WAIT_FOR_IT);
 
+										sendMsgToServer(&cory, sizeof(corAux));
+
 								    	printf("Meu id eh %i\n", myid);
 
-								    	sendMsgToServer(&cory, sizeof(corAux));
+								    	redrawBackground();
+								    	al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 3), ALLEGRO_ALIGN_CENTRE, "Aguarde os outros jogadores");
+										al_flip_display();
+
+								    	//recvMsgFromServer(&quantPlayers, WAIT_FOR_IT);
 									}
 
 									// Vai para a tela do jogo
@@ -513,7 +519,9 @@ int main(void)
 				al_get_keyboard_state(&keyState);
 
 				if (al_key_down(&keyState, ALLEGRO_KEY_ESCAPE))
-				{
+				{	
+					pack.dead = 1;
+					sendMsgToServer(&pack, sizeof(direc));
 					escPlay = true;
 					playScreen = false;
 					break;
@@ -913,7 +921,7 @@ void drawFood()
 		for (j = 0; j < worldHeight; j += 110)
 		{
 			char eated = false;
-			for (k = 0; k < syncy.eFSize; k++)
+			for (k = 0; k < 50; k++)
 			{
 				if (syncy.eatedFoodsX[k] == i && syncy.eatedFoodsY[k] == j)
 				{

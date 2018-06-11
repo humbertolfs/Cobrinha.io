@@ -13,7 +13,7 @@ int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 int moveSpeed = 2;
-int count, z, idAtual, quantPlayers, scoreAux, l, alguem;
+int count, z, idAtual, quantPlayers, scoreAux, l, alguem, l1 = 0;
 
 int main()
 {
@@ -44,10 +44,6 @@ int main()
     for(l = 0; l < maxPlayers; l++)
     {
         syncy.disc[l] = 0;
-    }
-    
-    for(l = 0; l < maxPlayers; l++)
-    {
         player[l].seed = 3;
     }
 
@@ -62,60 +58,51 @@ int main()
         {
             printf("Alguem se Conectou com ID : %d\n", id);
             quantPlayers = id;
-            if(quantPlayers == 0)
+            
+            alguem = 1;
+
+            orientation = (int *) realloc(orientation, (quantPlayers+1) * sizeof(int));
+
+            orientation[quantPlayers] = 0;
+
+            if(id==0){
+                player[id].x = 500;
+                player[id].y = 500;
+            } else if(id==1){
+                player[id].x = 1500;
+                player[id].y = 500;
+            } else if(id==2){
+                player[id].x = 500;
+                player[id].y = 1500;
+            } else if(id==3){
+                player[id].x = 1500;
+                player[id].y = 1500;
+            }  
+
+
+
+            player[id].score = 20;
+            player[id].radius = 20;
+
+            syncy.numPlayers = quantPlayers;
+
+            for(l = 0; l < 25; l++)
             {
-                alguem = 1;
-
-                player[id].x = 1000;
-                player[id].y = 1000;
-                player[id].score = 20;
-                player[id].radius = 20;
-
-                for(l = 0; l < 25; l++)
-                {
-                    player[id].orientacao[l] = -1;
-                }
-
-                for (count = 0; count < (player[id].score / 20) + 5; count++)
-                {
+                player[id].orientacao[l] = -1;
+                if(l < (player[id].score / 20) + 5){
                     player[id].orientacao[count] = 0;
                 }
+            }
 
-                sendMsgToClient(&id, sizeof(int), id);
+            sendMsgToClient(&id, sizeof(int), id);
 
-                recvMsgFromClient(&cory, id, WAIT_FOR_IT);
-                player[id].skin = cory.cor;
-
-            } else if(quantPlayers > 0){
-
-                    orientation = (int *) realloc(orientation, (quantPlayers+1) * sizeof(int));
-
-                    orientation[quantPlayers] = 0;
-
-                    player[id].x = 1000;
-                    player[id].y = 1000;
-                    player[id].score = 20;
-                    player[id].radius = 20;
-
-                    syncy.numPlayers = quantPlayers;
-
-                    for(l = 0; l < 25; l++)
-                    {
-                        player[id].orientacao[l] = -1;
-                    }
-
-                    for (count = 0; count < (player[id].score / 20) + 5; count++)
-                    {
-                        player[id].orientacao[count] = 0;
-                    }
-
-                    sendMsgToClient(&id, sizeof(int), id);
-                    
-                    recvMsgFromClient(&cory, id, WAIT_FOR_IT);
-                    player[id].skin = cory.cor;
-
-                }            
+            recvMsgFromClient(&cory, id, WAIT_FOR_IT);
+            player[id].skin = cory.cor;          
         }
+        // if(quantPlayers==3){
+        //     broadcast(&quantPlayers, sizeof(int));
+        //     alguem = 1;
+        // }        
         
         if(alguem)
         {   
@@ -127,6 +114,7 @@ int main()
                 if(pack_server.dead)
                 {
                     disconnectClient(id);
+                    printf("O ID : %i se desconectou\n", id);
                     syncy.disc[id] = 1;
                     pack_server.dead = 0;
                 }
@@ -138,9 +126,9 @@ int main()
                 }
 
                 if(pack_server.scored)
-                {
+                {   
                     printf("%i %i %i\n", syncy.eFSize, pack_server.i, pack_server.j);
-                    
+
                     (syncy.eFSize)++;
                     syncy.eatedFoodsX[syncy.eFSize - 1] = pack_server.i;
                     syncy.eatedFoodsY[syncy.eFSize - 1] = pack_server.j;
@@ -148,10 +136,11 @@ int main()
                     if(syncy.eFSize == 50)
                     {   
                         syncy.eFSize = 0;
-                        for(l = 0; l < 50; l++)
+                        syncy.eatedFoodsX[l1++] = 0;
+                        syncy.eatedFoodsY[l1++] = 0;
+                        if(l1 == 49)
                         {
-                            syncy.eatedFoodsX[l] = 0;
-                            syncy.eatedFoodsY[l] = 0;
+                            l1 = 0;
                         }
                     }
 
