@@ -6,6 +6,8 @@ direc pack_server;
 sync syncy;
 corAux cory;
 
+int eatedFoodsX[50];
+int eatedFoodsY[50];
 int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
@@ -31,6 +33,13 @@ int main()
     *orientation = 0;
 
     syncy.numPlayers = 0;
+
+    syncy.eFSize = 0;
+    for(l = 0; l < 50; l++)
+    {
+        syncy.eatedFoodsX[l] = 0;
+        syncy.eatedFoodsY[l] = 0;
+    }
 
     for(l = 0; l < maxPlayers; l++)
     {
@@ -126,6 +135,27 @@ int main()
                 if(player[id].score/20 == 1)
                 {
                     player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
+                }
+
+                if(pack_server.scored)
+                {
+                    printf("%i %i %i\n", syncy.eFSize, pack_server.i, pack_server.j);
+                    
+                    (syncy.eFSize)++;
+                    syncy.eatedFoodsX[syncy.eFSize - 1] = pack_server.i;
+                    syncy.eatedFoodsY[syncy.eFSize - 1] = pack_server.j;
+                    
+                    if(syncy.eFSize == 50)
+                    {   
+                        syncy.eFSize = 0;
+                        for(l = 0; l < 50; l++)
+                        {
+                            syncy.eatedFoodsX[l] = 0;
+                            syncy.eatedFoodsY[l] = 0;
+                        }
+                    }
+
+                    pack_server.scored = 0;
                 }
 
                 if (pack_server.pressed)

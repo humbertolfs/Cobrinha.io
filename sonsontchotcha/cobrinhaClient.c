@@ -18,14 +18,13 @@ sync syncy;
 corAux cory;
 
 // Variáveis de controle
-int *eatedFoodsX = NULL;
-int *eatedFoodsY = NULL;
-int eFSize = 0;
 int cameraPosition[2] = { 0, 0 };
 int worldWidth = 2000;
 int worldHeight = 2000;
 int screenWidth = 1280;
 int screenHeight = 720;
+int lastEatedX = 0;
+int lastEatedY = 0;
 enum directions { UP, DOWN, LEFT, RIGHT };
 float moveSpeed = 2;
 char name[6];
@@ -51,6 +50,14 @@ int main(void)
 	if (!initialize())
 	{
 		return -1;
+	}
+
+	syncy.eFSize = 0;
+
+    for(l = 0; l < 50; l++)
+	{
+		syncy.eatedFoodsX[l] = 0;
+		syncy.eatedFoodsY[l] = 0;
 	}
 
 	for(l = 0; l < maxPlayers; l++)
@@ -525,7 +532,8 @@ int main(void)
 
 				// Verifica se está pressionado
 				if (pack.pressed)
-				{
+				{	
+					pack.scored = 0;
 					sendMsgToServer(&pack, sizeof(direc));
 				}
 
@@ -599,13 +607,13 @@ int main(void)
 				al_flip_display();
 
 				// Aumenta a pontuação, caso tenha comido
-				if (scored)
+				if (pack.scored)
 				{
 					pack.scoreAux++;
 
 					sendMsgToServer(&pack, sizeof(direc));
 
-					scored = false;
+					pack.scored = 0;
 				}
 
 				// Limita o FPS
@@ -859,15 +867,6 @@ void drawEnemy(Snake enemy)
 			else
 				drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
 
-
-			/*_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), enemy.x - (cos(rad_orientation) * i * enemy.radius) + enemy.radius, enemy.y + (sin(rad_orientation) * i * enemy.radius), al_map_rgb(255, 0, 0), 1);
-			al_draw_line(enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) - enemy.radius, enemy.x - (cos(rad_orientation) * i * enemy.radius), enemy.y + (sin(rad_orientation) * i * enemy.radius) + enemy.radius, al_map_rgb(255, 0, 0), 1);
-
-			al_draw_line(player[myid].x - enemy.radius, player[myid].y, player[myid].x + enemy.radius, player[myid].y, al_map_rgb(255, 255, 255), 1);
-			al_draw_line(player[myid].x, player[myid].y - enemy.radius, player[myid].x , player[myid].y + enemy.radius, al_map_rgb(255, 255, 255), 1);*/
-
-
-
 			if ((enemy.x - (cos_rad * i * enemy.radius) - enemy.radius + 5 > player[myid].x - player[myid].radius &&
 				enemy.x - (cos_rad * i * enemy.radius) - enemy.radius - 5 < player[myid].x + player[myid].radius &&
 				enemy.y + (sin_rad * i * enemy.radius) > player[myid].y - player[myid].radius &&
@@ -910,9 +909,9 @@ void drawFood()
 		for (j = 0; j < worldHeight; j += 110)
 		{
 			char eated = false;
-			for (k = 0; k < eFSize; k++)
+			for (k = 0; k < syncy.eFSize; k++)
 			{
-				if (eatedFoodsX[k] == i && eatedFoodsY[k] == j)
+				if (syncy.eatedFoodsX[k] == i && syncy.eatedFoodsY[k] == j)
 				{
 					eated = true;
 				}
@@ -945,13 +944,14 @@ void drawFood()
 						rY + 3 < player[myid].y + player[myid].radius))
 				{
 					// ENCOSTA EM UM PONTO
-					scored = true;
-					eFSize++;
-					eatedFoodsX = realloc(eatedFoodsX, eFSize * sizeof(int));
-					eatedFoodsY = realloc(eatedFoodsY, eFSize * sizeof(int));
-
-					eatedFoodsX[eFSize - 1] = i;
-					eatedFoodsY[eFSize - 1] = j;
+					if (lastEatedX != i && lastEatedY != j)
+                    {
+                        lastEatedX = i;
+                        lastEatedY = j;
+                        pack.scored = true;
+						pack.i = i;
+						pack.j = j;
+                    }
 
 					//printf("Encostou no ponto x: %d y: %d\n", i, j);
 				}
