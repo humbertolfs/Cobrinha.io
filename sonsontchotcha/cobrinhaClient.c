@@ -31,7 +31,9 @@ char name[6];
 char ip[16];
 bool scored = false;
 bool dead = false;
-int myid, enemyid, l, z, quantPlayers, retorno, tempo, myscore;
+int myid;
+int l, z; 
+int quantPlayers;
 
 
 // Variáveis do Allegro
@@ -52,6 +54,7 @@ int main(void)
 		return -1;
 	}
 
+	//Inicialização de variáveis
 	syncy.eFSize = 0;
 
     for(l = 0; l < 50; l++)
@@ -66,6 +69,7 @@ int main(void)
     }
 
 	pack.dead = 0;
+
 	bool mainLoop = true;
 	bool escPlay = false;
 	bool tbSelected = false;
@@ -433,7 +437,7 @@ int main(void)
 							else if (events.mouse.x >= playpos[0] && events.mouse.x <= playpos[0] + al_get_bitmap_width(play) && events.mouse.y >= playpos[1] && events.mouse.y <= playpos[1] + al_get_bitmap_height(play))
 							{
 								// Evento de clique no botão de jogar
-								// Aqui deve ficar a parte de conexão com o servidor, casos de erro de conexão, etc.
+								// Conexão com o servidor, casos de erro de conexão, etc.
 
 								//Verifica se a string do nome não está vazia e nem o IP
 								if (strlen(name) > 0 && strlen(ip) > 0)
@@ -441,8 +445,8 @@ int main(void)
 									cory.cor = selectedSkin;
 
 									// Inicializa o player
-									char ServerIP[30]={"127.0.0.1"};
-									enum conn_ret_t ans = connectToServer(ServerIP);
+									//char ServerIP[30]={"127.0.0.1"};
+									enum conn_ret_t ans = connectToServer(ip);
 
 								    if (ans != SERVER_UP) 
 									{
@@ -572,7 +576,7 @@ int main(void)
 
 				drawFood();
 
-				// Verifica se a cobra morreu00
+				// Verifica se a cobra morreu
 				if (!dead)
 					drawChar(player[myid]);
 				else
