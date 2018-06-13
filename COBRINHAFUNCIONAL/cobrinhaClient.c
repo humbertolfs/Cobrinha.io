@@ -964,7 +964,7 @@ void drawFood()
 				eated = true;
             }
 
-			for (k = 0; k < syncy.eFSize; k++)
+			for (k = 0; k < 50; k++)
 			{
 				if (syncy.eatedFoods[k] == ij)
 				{

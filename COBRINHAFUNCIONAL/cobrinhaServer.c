@@ -124,7 +124,7 @@ int main()
                 {
 
                     char eated = false, k;
-                    for (k = 0; k < syncy.eFSize; k++)
+                    for (k = 0; k < 50; k++)
                     {
                         if (syncy.eatedFoods[k] == pack_server.ij)
                         {
