@@ -10,10 +10,8 @@ int eatedFoods[50];
 int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
-int *orientation;
 int moveSpeed = 2;
 bool started = false;
-int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id, reject = 0;
 
 int main()
 {
@@ -25,10 +23,16 @@ int main()
     if (!windowInit(150, 100, "Server"))
         return -1;
 
+    serverInit(maxPlayers);
+
+    int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
+
+    int *orientation = NULL;
+
     struct msg_ret_t retorno;
     bool sair = false;
 
-    orientation = (int *) malloc(1 * sizeof(int));
+    orientation = (int *) realloc(orientation, 1 * sizeof(int));
 
     *orientation = 0;
 
@@ -45,8 +49,6 @@ int main()
         syncy.disc[l] = 0;
         syncy.win[l] = 0;
     }
-
-    serverInit(maxPlayers);
 
     while(!sair)
     {
@@ -122,6 +124,8 @@ int main()
                 {
                     disconnectClient(id);
                     printf("O ID : %i se desconectou\n", id);
+                    disconnects++;
+                    printf("o numero de jogadores desconectados e = %d\n", disconnects);
                     syncy.disc[id] = 1;
                     pack_server.dead = 0;
                 }
@@ -130,16 +134,22 @@ int main()
                 if(player[id].score%20 == 1)
                 {
                     player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0;
-                    if(((player[id].score / 20) + 5) + 1 == 25)
+                    if(((player[id].score / 20) + 5) + 1 == 25 || disconnects == 3)
                     {
-                        syncy.win[id] = 1;
-                    } else if(disconnects == 3){
                         syncy.win[id] = 1;
                     }
                 }
 
-                if(pack_server.win)
+                if(disconnects == 3)
                 {
+                    syncy.win[id] = 1;
+                }
+
+                if(pack_server.win)
+                {   
+                    printf("ACABOU O JOGO\n");
+                    disconnectClient(id);
+                    printf("O ID : %i se desconectou\n", id);
                     serverReset();
                 }
 
@@ -245,14 +255,6 @@ int main()
                             else if (player[idAtual].y < 0)
                                 player[idAtual].y += worldHeight;
                     }
-                }
-            }
-
-            for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
-            {
-                if(syncy.disc[idAtual])
-                {
-                    disconnects++;
                 }
             }
 

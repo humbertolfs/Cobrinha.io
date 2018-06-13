@@ -614,17 +614,24 @@ int main(void)
 
 				if(syncy.win[myid])
 				{
-					
-			    	al_clear_to_color(al_map_rgb(22, 28, 34));
+					al_clear_to_color(al_map_rgb(22, 28, 34));
 
-					al_draw_tinted_bitmap_region(background, al_map_rgba_f(1, 1, 1, 0.2), 0, 0, screenWidth, screenHeight, 0, 0, 0);
+					al_draw_tinted_bitmap_region(background, al_map_rgba_f(1, 1, 1, 0.2), 0, 0, screenWidth, screenHeight, cameraPosition[0], cameraPosition[1], 0);
 
-			    	al_draw_text(raleway56, al_map_rgb(255, 255, 255), (screenWidth / 2), (screenHeight / 2) - 38, ALLEGRO_ALIGN_CENTRE, "ganhou o jogo");
+			    	al_draw_text(raleway56, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2) - 38, ALLEGRO_ALIGN_CENTRE, "ganhou o jogo");
 					
-			    	al_draw_text(raleway32, al_map_rgb(249, 38, 114), (screenWidth / 2), (screenHeight / 2) + 24, ALLEGRO_ALIGN_CENTRE, "humberto eh tchonga");
+			    	al_draw_text(raleway32, al_map_rgb(249, 38, 114), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 2) + 24, ALLEGRO_ALIGN_CENTRE, "humberto eh tchonga");
 			    	al_flip_display();
-			    	al_rest(2.0);
-					pack.win = 1;
+
+			    	pack.win = 1;
+
+					sendMsgToServer(&pack, sizeof(direc));
+
+					al_rest(2.0);
+
+					escPlay = true;
+					playScreen = false;
+					break;
 				}
 
 				pack.scoreAux = player[myid].score;
@@ -644,6 +651,7 @@ int main(void)
 			    	al_flip_display();
 
 					pack.dead = 1;
+
 					sendMsgToServer(&pack, sizeof(direc));
 
 					al_rest(2.0);
