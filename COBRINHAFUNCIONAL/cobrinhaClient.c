@@ -627,7 +627,7 @@ int main(void)
 
 					sendMsgToServer(&pack, sizeof(direc));
 
-					al_rest(2.0);
+					al_rest(4.0);
 
 					escPlay = true;
 					playScreen = false;
@@ -654,7 +654,7 @@ int main(void)
 
 					sendMsgToServer(&pack, sizeof(direc));
 
-					al_rest(2.0);
+					al_rest(4.0);
 
 					escPlay = true;
 					playScreen = false;

@@ -125,7 +125,6 @@ int main()
                     disconnectClient(id);
                     printf("O ID : %i se desconectou\n", id);
                     disconnects++;
-                    printf("o numero de jogadores desconectados e = %d\n", disconnects);
                     syncy.disc[id] = 1;
                     pack_server.dead = 0;
                 }
@@ -147,7 +146,6 @@ int main()
 
                 if(pack_server.win)
                 {   
-                    printf("ACABOU O JOGO\n");
                     disconnectClient(id);
                     printf("O ID : %i se desconectou\n", id);
                     serverReset();
