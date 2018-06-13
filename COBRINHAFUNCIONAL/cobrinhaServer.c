@@ -10,6 +10,8 @@ int eatedFoods[50];
 int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
+int *orientation;
 int moveSpeed = 2;
 bool started = false;
 
@@ -23,16 +25,10 @@ int main()
     if (!windowInit(150, 100, "Server"))
         return -1;
 
-    serverInit(maxPlayers);
-
-    int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
-
-    int *orientation = NULL;
-
     struct msg_ret_t retorno;
     bool sair = false;
 
-    orientation = (int *) realloc(orientation, 1 * sizeof(int));
+    orientation = (int *) malloc(1 * sizeof(int));
 
     *orientation = 0;
 
@@ -49,6 +45,10 @@ int main()
         syncy.disc[l] = 0;
         syncy.win[l] = 0;
     }
+    
+    pack_server.win = 0;
+
+    serverInit(maxPlayers);
 
     while(!sair)
     {
@@ -148,6 +148,7 @@ int main()
                 {   
                     disconnectClient(id);
                     printf("O ID : %i se desconectou\n", id);
+                    reject = 0;
                     serverReset();
                 }
 
