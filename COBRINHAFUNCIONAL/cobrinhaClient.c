@@ -67,6 +67,7 @@ int main(void)
 	for(l = 0; l < maxPlayers; l++)
     {
         syncy.disc[l] = 0;
+        syncy.win[l] = 0;
     }
 
 	pack.dead = 0;
@@ -609,6 +610,13 @@ int main(void)
 							(player[z].y)++;
 						}
 					}
+				}
+
+				if(syncy.win[myid])
+				{
+					al_draw_text(raleway48, al_map_rgb(255, 255, 255), cameraPosition[0] + (screenWidth / 2), cameraPosition[1] + (screenHeight / 3), ALLEGRO_ALIGN_CENTRE, "Voce venceu");
+					al_flip_display();
+					pack.win = 1;
 				}
 
 				pack.scoreAux = player[myid].score;

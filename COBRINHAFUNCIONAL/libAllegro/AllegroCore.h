@@ -28,7 +28,7 @@ ALLEGRO_EVENT_QUEUE *eventsQueue;
 
 typedef struct direc
 {
-	int orientation, scoreAux, dead, scored, ij;
+	int orientation, scoreAux, dead, scored, ij, win;
 } direc;
 
 typedef struct Snake
@@ -52,6 +52,7 @@ typedef struct sync
 	short int disc[maxPlayers];
 	short int eatedFoods[50];
 	short int eFSize;
+	short int win[maxPlayers];
 } sync;
 
 //Funções Centrais da Allegro

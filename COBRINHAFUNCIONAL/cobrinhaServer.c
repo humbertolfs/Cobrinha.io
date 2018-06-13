@@ -13,7 +13,7 @@ enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
-int count, z, idAtual, quantPlayers, scoreAux, l, alguem, l1 = 0;
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0;
 
 int main()
 {
@@ -50,7 +50,13 @@ int main()
     while(!sair)
     {
         startTimer();
-        int id = acceptConnection();
+        if(quantPlayers <3)
+        {
+            int id = acceptConnection();
+        } else {
+            rejectConnection();
+        }
+        
 
         if(id != NO_CONNECTION)
         {
@@ -82,9 +88,10 @@ int main()
 
             for(l = 0; l < 25; l++)
             {
-                player[id].orientacao[l] = -1;
                 if(l < (player[id].score / 20) + 5){
-                    player[id].orientacao[count] = 0;
+                    player[id].orientacao[l] = 0;
+                } else {
+                    player[id].orientacao[l] = -1;
                 }
             }
 
@@ -117,7 +124,18 @@ int main()
                 player[id].score = pack_server.scoreAux;
                 if(player[id].score%20 == 1)
                 {
-                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
+                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0;
+                    if(((player[id].score / 20) + 5) + 1 == 25)
+                    {
+                        syncy.win[id] = 1;
+                    } else if(disconnects == 3){
+                        syncy.win[id] = 1;
+                    }
+                }
+
+                if(pack_server.win)
+                {
+                    serverReset();
                 }
 
                 if(pack_server.scored)
@@ -222,6 +240,14 @@ int main()
                             else if (player[idAtual].y < 0)
                                 player[idAtual].y += worldHeight;
                     }
+                }
+            }
+
+            for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
+            {
+                if(syncy.disc[idAtual])
+                {
+                    disconnects++;
                 }
             }
 

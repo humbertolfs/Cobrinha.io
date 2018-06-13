@@ -135,8 +135,6 @@ Return:
 	otherwise return.status is MESSAGE_OK , return.client_id  is the user's id and return.quant_bytes is the size of the messagem in bytes
 */
 
-int iNovo = 0;
-
 struct msg_ret_t recvMsg(void * msg){
 	struct timeval timeout = {0, SELECT_TIMEOUT};
 	fd_set readfds = active_fd_set;
@@ -148,16 +146,14 @@ struct msg_ret_t recvMsg(void * msg){
    	if(sel_ret == 0){ // timeout
 		return make_msg_ret(NO_MESSAGE, -1, 0);
 	}
-
-	if(isValidId(iNovo)){
-		if(FD_ISSET(connected_clients[iNovo].sockid, &readfds)){
-			return recvMsgFromClient(msg, iNovo, WAIT_FOR_IT);
+	int i;
+	for(i = 0; i < actual_max_clients; ++i){ // look for someone with valid sockid
+		if(isValidId(i)){
+			if(FD_ISSET(connected_clients[i].sockid, &readfds)){
+				return recvMsgFromClient(msg, i, WAIT_FOR_IT);
+			}
 		}
 	}
-
-	if (++iNovo == actual_max_clients)
-		iNovo = 0;
-
 	return make_msg_ret(NO_MESSAGE, -1, 0);
 }
 
