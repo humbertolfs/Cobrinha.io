@@ -13,7 +13,7 @@ enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
-int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id;
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id, reject = 0;
 
 int main()
 {
@@ -43,6 +43,7 @@ int main()
     for(l = 0; l < maxPlayers; l++)
     {
         syncy.disc[l] = 0;
+        syncy.win[l] = 0;
     }
 
     serverInit(maxPlayers);
@@ -50,16 +51,19 @@ int main()
     while(!sair)
     {
         startTimer();
-        if(quantPlayers <3)
+
+        if(!reject)
         {
             id = acceptConnection();
         } else {
+            id = NO_CONNECTION;
             rejectConnection();
         }
         
 
         if(id != NO_CONNECTION)
         {
+
             printf("Alguem se Conectou com ID : %d\n", id);
             quantPlayers = id;
 
@@ -102,8 +106,9 @@ int main()
         }
         
         if(quantPlayers==3 && !started){
-             broadcast(&quantPlayers, sizeof(int));
-             started = true;
+            broadcast(&quantPlayers, sizeof(int));
+            reject = 1;
+            started = true;
         } 
         
         if(started)
