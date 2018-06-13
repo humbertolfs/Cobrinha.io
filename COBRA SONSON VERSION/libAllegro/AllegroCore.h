@@ -19,7 +19,7 @@
 #include <string.h>
 
 #define FPS 60
-#define maxPlayers 3
+#define maxPlayers 4
 
 double startingTime;
 

@@ -95,126 +95,89 @@ int main()
             player[id].skin = cory.cor;          
         }
         
-        if(quantPlayers==maxPlayers-1 && !started){
+        if(quantPlayers==3 && !started){
              broadcast(&quantPlayers, sizeof(int));
              started = true;
         } 
         
         if(started)
         {   
-            bool valid = false;
-            if (isValidID(actual_client))
-            {
-                recvMsgFromClient(&pack_server, actual_client, WAIT_FOR_IT);
-                valid = true;
-            }
+            recvMsg(&pack_server);
 
-            if (++actual_client == maxPlayers)
-                actual_client = 0;
+            if(retorno.status != NO_MESSAGE)
+            {   
+                id = retorno.client_id;
+                
+                if(pack_server.dead)
+                {
+                    disconnectClient(id);
+                    printf("O ID : %i se desconectou\n", id);
+                    syncy.disc[id] = 1;
+                    pack_server.dead = 0;
+                }
 
-            if (valid)
-            {
-                if(retorno.status != NO_MESSAGE)
-                {   
-                    id = retorno.client_id;
-                    
-                    if(pack_server.dead)
+                player[id].score = pack_server.scoreAux;
+                if(player[id].score%20 == 1)
+                {
+                    player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
+                }
+
+                if(pack_server.scored)
+                {
+
+                    char eated = false, k;
+                    for (k = 0; k < 50; k++)
                     {
-                        disconnectClient(id);
-                        printf("O ID : %i se desconectou\n", id);
-                        syncy.disc[id] = 1;
-                        pack_server.dead = 0;
-                    }
-
-                    player[id].score = pack_server.scoreAux;
-                    if(player[id].score%20 == 1)
-                    {
-                        player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0; 
-                    }
-
-                    if(pack_server.scored)
-                    {
-
-                        char eated = false, k;
-                        for (k = 0; k < 50; k++)
+                        if (syncy.eatedFoods[k] == pack_server.ij)
                         {
-                            if (syncy.eatedFoods[k] == pack_server.ij)
+                            eated = true;
+                        }
+                    }
+
+                    if (!eated)
+                    {
+                        syncy.eatedFoods[syncy.eFSize] = pack_server.ij;
+                        (syncy.eFSize)++;
+                        
+                        if(syncy.eFSize == 50)
+                        {   
+                            syncy.eFSize = 0;
+                            syncy.eatedFoods[l1++] = 0;
+                            if(l1 == 49)
                             {
-                                eated = true;
-                            }
-                        }
-
-                        if (!eated)
-                        {
-                            syncy.eatedFoods[syncy.eFSize] = pack_server.ij;
-                            (syncy.eFSize)++;
-                            
-                            if(syncy.eFSize == 50)
-                            {   
-                                syncy.eFSize = 0;
-                                syncy.eatedFoods[l1++] = 0;
-                                if(l1 == 49)
-                                {
-                                    l1 = 0;
-                                }
-                            }
-                        }
-
-                        pack_server.scored = 0;
-                    }
-
-                    orientation[id] = pack_server.orientation;
-
-                    for (count = (player[id].score / 20) + 5; count > 0; count--)
-                        player[id].orientacao[count] = player[id].orientacao[count-1];
-
-                    player[id].orientacao[0] = orientation[id];
-
-                    player[id].x += cos(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
-                    player[id].y -= sin(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
-
-                    if (player[id].x > worldWidth)
-                            player[id].x -= worldWidth;
-                        else if (player[id].x < 0)
-                            player[id].x += worldWidth;
-
-                    if (player[id].y > worldHeight)
-                            player[id].y -= worldHeight;
-                        else if (player[id].y < 0)
-                            player[id].y += worldHeight;
-
-                    for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
-                    {
-                        if(!syncy.disc[idAtual])
-                        {
-                            if(idAtual != id)
-                            {
-                                for (count = (player[id].score / 20) + 5; count > 0; count--)
-                                    player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
-
-                                player[idAtual].orientacao[0] = orientation[idAtual];
-
-                                (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
-                                (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
-
-                                if (player[idAtual].x > worldWidth)
-                                        player[idAtual].x -= worldWidth;
-                                    else if (player[idAtual].x < 0)
-                                        player[idAtual].x += worldWidth;
-
-                                if (player[idAtual].y > worldHeight)
-                                        player[idAtual].y -= worldHeight;
-                                    else if (player[idAtual].y < 0)
-                                        player[idAtual].y += worldHeight;
+                                l1 = 0;
                             }
                         }
                     }
 
-                } else {
+                    pack_server.scored = 0;
+                }
 
-                    for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
+                orientation[id] = pack_server.orientation;
+
+                for (count = (player[id].score / 20) + 5; count > 0; count--)
+                    player[id].orientacao[count] = player[id].orientacao[count-1];
+
+                player[id].orientacao[0] = orientation[id];
+
+                player[id].x += cos(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
+                player[id].y -= sin(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
+
+                if (player[id].x > worldWidth)
+                        player[id].x -= worldWidth;
+                    else if (player[id].x < 0)
+                        player[id].x += worldWidth;
+
+                if (player[id].y > worldHeight)
+                        player[id].y -= worldHeight;
+                    else if (player[id].y < 0)
+                        player[id].y += worldHeight;
+
+                for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
+                {
+                    if(!syncy.disc[idAtual])
                     {
-                        if(!syncy.disc[idAtual])
+                        if(idAtual != id)
                         {
                             for (count = (player[id].score / 20) + 5; count > 0; count--)
                                 player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
@@ -237,14 +200,40 @@ int main()
                     }
                 }
 
-                broadcast(&syncy, sizeof(sync));
+            } else {
 
-                for(z = 0; z <= quantPlayers; z++)
+                for(idAtual = 0; idAtual <= quantPlayers; idAtual++)
                 {
-                    if(!syncy.disc[z])
+                    if(!syncy.disc[idAtual])
                     {
-                        broadcast(&player[z], sizeof(Snake));
+                        for (count = (player[id].score / 20) + 5; count > 0; count--)
+                            player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
+
+                        player[idAtual].orientacao[0] = orientation[idAtual];
+
+                        (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+                        (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+
+                        if (player[idAtual].x > worldWidth)
+                                player[idAtual].x -= worldWidth;
+                            else if (player[idAtual].x < 0)
+                                player[idAtual].x += worldWidth;
+
+                        if (player[idAtual].y > worldHeight)
+                                player[idAtual].y -= worldHeight;
+                            else if (player[idAtual].y < 0)
+                                player[idAtual].y += worldHeight;
                     }
+                }
+            }
+
+            broadcast(&syncy, sizeof(sync));
+
+            for(z = 0; z <= quantPlayers; z++)
+            {
+                if(!syncy.disc[z])
+                {
+                    broadcast(&player[z], sizeof(Snake));
                 }
             }
         }
