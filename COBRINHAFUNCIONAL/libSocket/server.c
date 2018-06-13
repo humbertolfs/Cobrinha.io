@@ -78,6 +78,31 @@ void serverReset(){
 	FD_SET (server_sock, &server_fd_set);
 }
 
+void rejectConnection() {
+  struct timeval timeout = {0, SELECT_TIMEOUT};
+  fd_set readfds = server_fd_set;
+
+  int sel_ret = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout);
+  if (sel_ret < 0) {
+    perror("select");
+    exit(EXIT_FAILURE);
+  }
+  if (sel_ret == 0) {
+    return;
+  }
+
+  int new_sock = accept(server_sock, NULL, NULL);
+  enum conn_msg_t return_msg = CONNECTIONS_CLOSED;
+  int msg_size = sizeof(return_msg);
+
+  if (new_sock < 0) {  // not valid sock value
+    return;
+  }
+  write(new_sock, &msg_size, sizeof(msg_size));
+  write(new_sock, &return_msg, sizeof(return_msg));
+  close(new_sock);
+}
+
 /*
 If there is a connection pedding, accept it.
 Returns:

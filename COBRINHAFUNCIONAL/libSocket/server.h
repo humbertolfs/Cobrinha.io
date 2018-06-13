@@ -19,6 +19,7 @@ struct msg_ret_t{
 void serverInit(int max_clients);
 void serverReset();
 int acceptConnection();
+void rejectConnection();
 struct msg_ret_t recvMsg(void *msg);
 struct msg_ret_t recvMsgFromClient(void *msg, int client_id, int option);
 int sendMsgToClient(void *msg, int size, int client_id);

@@ -13,7 +13,7 @@ enum directions { UP, DOWN, LEFT, RIGHT };
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
-int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0;
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id;
 
 int main()
 {
@@ -52,7 +52,7 @@ int main()
         startTimer();
         if(quantPlayers <3)
         {
-            int id = acceptConnection();
+            id = acceptConnection();
         } else {
             rejectConnection();
         }
