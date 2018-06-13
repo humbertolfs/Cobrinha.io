@@ -105,7 +105,7 @@ int main()
             bool valid = false;
             if (isValidID(actual_client))
             {
-                recvMsgFromClient(pack_server, actual_client, WAIT_FOR_IT);
+                recvMsgFromClient(&pack_server, actual_client, WAIT_FOR_IT);
                 valid = true;
             }
 
