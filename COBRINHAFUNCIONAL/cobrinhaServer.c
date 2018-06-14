@@ -10,7 +10,7 @@ int eatedFoods[50];
 int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
-int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0, opa = 0, test;
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0, opa = 0;
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
@@ -108,7 +108,7 @@ int main()
             player[id].skin = cory.cor;          
         }
         
-        if(opa == 1 && !started){
+        if(quantPlayers == 3 && !started){
             broadcast(&quantPlayers, sizeof(int));
             reject = 1;
             started = true;
@@ -170,14 +170,9 @@ int main()
                         syncy.eatedFoods[syncy.eFSize] = pack_server.ij;
                         (syncy.eFSize)++;
                         
-                        if(syncy.eFSize == 50)
+                        if(syncy.eFSize == 49)
                         {   
                             syncy.eFSize = 0;
-                            syncy.eatedFoods[l1++] = 0;
-                            if(l1 == 49)
-                            {
-                                l1 = 0;
-                            }
                         }
                     }
 

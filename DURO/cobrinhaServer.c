@@ -171,14 +171,9 @@ int main()
                         syncy.eatedFoods[syncy.eFSize] = pack_server.ij;
                         (syncy.eFSize)++;
                         
-                        if(syncy.eFSize == 50)
+                        if(syncy.eFSize == 49)
                         {   
                             syncy.eFSize = 0;
-                            syncy.eatedFoods[l1++] = 0;
-                            if(l1 == 49)
-                            {
-                                l1 = 0;
-                            }
                         }
                     }
 
