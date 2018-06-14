@@ -539,26 +539,29 @@ int main(void)
 					break;
 				}
 
-				if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pressed != 1)
+				if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) || !al_key_down(&keyState, ALLEGRO_KEY_LEFT))
 				{
-					keyChanged = true;
-					dir = RIGHT;
-					pressed = 1;
-				}
-				else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 2)
-				{
-					keyChanged = true;
-					dir = LEFT;
-					pressed = 2;
-				}
-				else if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && !al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 0)
-				{
-					keyChanged = true;
-					pressed = 0;
-				}
-				else
-				{
-					keyChanged = false;
+					if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && pressed != 1)
+					{
+						keyChanged = true;
+						dir = RIGHT;
+						pressed = 1;
+					}
+					else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 2)
+					{
+						keyChanged = true;
+						dir = LEFT;
+						pressed = 2;
+					}
+					else if (!al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && !al_key_down(&keyState, ALLEGRO_KEY_LEFT) && pressed != 0)
+					{
+						keyChanged = true;
+						pressed = 0;
+					}
+					else
+					{
+						keyChanged = false;
+					}
 				}
 					
 				pack.keyChanged = keyChanged;

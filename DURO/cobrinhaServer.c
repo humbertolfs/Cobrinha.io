@@ -14,7 +14,7 @@ int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnect
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
-int pressed = 0;
+int pressed[maxPlayers];
 
 int main()
 {
@@ -45,6 +45,7 @@ int main()
     {
         syncy.disc[l] = 0;
         syncy.win[l] = 0;
+        pressed[l] = 0;
     }
     
     pack_server.win = 0;
@@ -184,15 +185,16 @@ int main()
                     pack_server.scored = 0;
                 }
 
+
                 if (pack_server.keyChanged)
                 {
-                    pressed = pack_server.pressed;
+                    pressed[id] = pack_server.pressed;
                 }
 
                 // Verifica se está pressionado
-                if (pressed)
+                if (pressed[id])
                 {
-                    switch (pressed)
+                    switch (pressed[id])
                     {
                     case 1:
                         orientation[id]--;
