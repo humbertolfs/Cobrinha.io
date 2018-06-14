@@ -10,7 +10,7 @@ int eatedFoods[50];
 int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
-int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
+int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0, opa = 0, test;
 int *orientation;
 int moveSpeed = 2;
 bool started = false;
@@ -74,6 +74,7 @@ int main()
             orientation[quantPlayers] = 0;
 
             if(id==0){
+                opa = 1;
                 player[id].x = 500;
                 player[id].y = 500;
             } else if(id==1){
@@ -107,7 +108,7 @@ int main()
             player[id].skin = cory.cor;          
         }
         
-        if(quantPlayers==3 && !started){
+        if(opa == 1 && !started){
             broadcast(&quantPlayers, sizeof(int));
             reject = 1;
             started = true;
@@ -209,7 +210,7 @@ int main()
                     {
                         if(idAtual != id)
                         {
-                            for (count = (player[id].score / 20) + 5; count > 0; count--)
+                            for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                                 player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
                             player[idAtual].orientacao[0] = orientation[idAtual];
@@ -236,7 +237,7 @@ int main()
                 {
                     if(!syncy.disc[idAtual])
                     {
-                        for (count = (player[id].score / 20) + 5; count > 0; count--)
+                        for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                             player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
                         player[idAtual].orientacao[0] = orientation[idAtual];

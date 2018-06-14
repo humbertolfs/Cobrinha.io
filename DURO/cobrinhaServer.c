@@ -234,7 +234,7 @@ int main()
                     {
                         if(idAtual != id)
                         {
-                            for (count = (player[id].score / 20) + 5; count > 0; count--)
+                            for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                                 player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
                             player[idAtual].orientacao[0] = orientation[idAtual];
@@ -261,7 +261,7 @@ int main()
                 {
                     if(!syncy.disc[idAtual])
                     {
-                        for (count = (player[id].score / 20) + 5; count > 0; count--)
+                        for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                             player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
                         player[idAtual].orientacao[0] = orientation[idAtual];
