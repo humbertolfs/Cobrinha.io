@@ -186,25 +186,6 @@ int main()
                     pressed[id] = pack_server.pressed;
                 }
 
-                // Verifica se está pressionado
-                if (pressed[id])
-                {
-                    switch (pressed[id])
-                    {
-                    case 1:
-                        orientation[id]--;
-                        break;
-                    case 2:
-                        orientation[id]++;
-                        break;
-                    }
-
-                    if (orientation[id] == 360)
-                        orientation[id] = 0;
-                    else if (orientation[id] == -1)
-                        orientation[id] = 359;
-                }
-
                 for (count = (player[id].score / 20) + 5; count > 0; count--)
                     player[id].orientacao[count] = player[id].orientacao[count-1];
 
@@ -227,6 +208,25 @@ int main()
                 {
                     if(!syncy.disc[idAtual])
                     {
+                        // Verifica se está pressionado
+                        if (pressed[idAtual])
+                        {
+                            switch (pressed[idAtual])
+                            {
+                            case 1:
+                                orientation[idAtual]--;
+                                break;
+                            case 2:
+                                orientation[idAtual]++;
+                                break;
+                            }
+
+                            if (orientation[idAtual] == 360)
+                                orientation[idAtual] = 0;
+                            else if (orientation[idAtual] == -1)
+                                orientation[idAtual] = 359;
+                        }
+
                         if(idAtual != id)
                         {
                             for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
@@ -256,6 +256,25 @@ int main()
                 {
                     if(!syncy.disc[idAtual])
                     {
+                        // Verifica se está pressionado
+                        if (pressed[idAtual])
+                        {
+                            switch (pressed[idAtual])
+                            {
+                            case 1:
+                                orientation[idAtual]--;
+                                break;
+                            case 2:
+                                orientation[idAtual]++;
+                                break;
+                            }
+
+                            if (orientation[idAtual] == 360)
+                                orientation[idAtual] = 0;
+                            else if (orientation[idAtual] == -1)
+                                orientation[idAtual] = 359;
+                        }
+                        
                         for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                             player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
