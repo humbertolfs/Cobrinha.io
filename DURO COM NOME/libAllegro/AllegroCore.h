@@ -39,15 +39,15 @@ typedef struct Snake
 	float y;
 	float radius;
 	char skin;
-	short int orientacao[26];
+	short int orientacao[25];
 	short int score;
-	char name[19];
+	char name[15];
 } Snake;
 
 typedef struct corAux
 {
 	char cor;
-	char login[19];
+	char login[15];
 } corAux;
 
 typedef struct sync

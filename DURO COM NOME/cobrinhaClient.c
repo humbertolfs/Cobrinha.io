@@ -28,7 +28,7 @@ int lastEated = 0;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int dir = LEFT;
 float moveSpeed = 2;
-char name[19];
+char name[15];
 char ip[16];
 bool scored = false;
 bool dead = false;
@@ -427,7 +427,7 @@ int main(void)
 								|| (inputChar >= 65 && inputChar <= 90) // letra maiúscula
 								|| (inputChar >= 97 && inputChar <= 122) //letra minúscula
 								|| (inputChar == 95 || inputChar == 46) // underline e ponto
-								) && sizeName < 18) {
+								) && sizeName < 14) {
 								name[sizeName] = inputChar;
 								name[sizeName + 1] = '\0';
 							}

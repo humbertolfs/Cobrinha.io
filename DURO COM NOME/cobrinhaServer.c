@@ -103,7 +103,7 @@ int main()
 
                 syncy.numPlayers = quantPlayers;
 
-                for(l = 0; l < 26; l++)
+                for(l = 0; l < 25; l++)
                 {
                     if(l < (player[id].score / 20) + 5){
                         player[id].orientacao[l] = 0;
@@ -145,7 +145,7 @@ int main()
                     if(player[id].score%20 == 1)
                     {
                         player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0;
-                        if(player[id].score >= 400 || disconnects == 3)
+                        if(player[id].score >= 379 || disconnects == 3)
                         {
                             syncy.win[id] = 1;
                         }
