@@ -103,7 +103,7 @@ int main()
 
                 syncy.numPlayers = quantPlayers;
 
-                for(l = 0; l < 25; l++)
+                for(l = 0; l < 26; l++)
                 {
                     if(l < (player[id].score / 20) + 5){
                         player[id].orientacao[l] = 0;

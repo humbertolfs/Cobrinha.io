@@ -39,7 +39,7 @@ typedef struct Snake
 	float y;
 	float radius;
 	char skin;
-	short int orientacao[25];
+	short int orientacao[26];
 	short int score;
 	char name[19];
 } Snake;
