@@ -27,6 +27,8 @@ int main()
     if (!windowInit(150, 100, "Server"))
         return -1;
 
+    serverInit(maxPlayers);
+        
     while (1)
     {
         struct msg_ret_t retorno;
@@ -58,7 +60,6 @@ int main()
         
         pack_server.win = 0;
 
-        serverInit(maxPlayers);
 
         while(!sair)
         {

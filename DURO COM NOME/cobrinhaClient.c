@@ -97,6 +97,8 @@ int main(void)
 		dead = false;
 		keyChanged = false;
 		velocity = false;
+		syncy = NULL;
+		cory = NULL;
 
 		//Inicialização de variáveis
 		syncy.eFSize = 0;
