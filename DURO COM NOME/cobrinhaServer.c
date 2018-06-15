@@ -138,7 +138,7 @@ int main()
                 if(player[id].score%20 == 1)
                 {
                     player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0;
-                    if(((player[id].score / 20) + 5) + 1 == 25 || disconnects == 3)
+                    if(player[id].score >= 379 || disconnects == 3)
                     {
                         syncy.win[id] = 1;
                     }
