@@ -112,7 +112,7 @@ int main()
             strcpy(player[id].name, cory.login);       
         }
         
-        if(quantPlayers==1 && !started){
+        if(quantPlayers==3 && !started){
             broadcast(&quantPlayers, sizeof(int));
             reject = 1;
             started = true;
