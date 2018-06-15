@@ -15,8 +15,6 @@ void drawFood();
 //structs
 Snake player[maxPlayers];
 direc pack;
-sync syncy;
-corAux cory;
 
 // Variáveis de controle
 int cameraPosition[2] = { 0, 0 };
@@ -36,6 +34,8 @@ bool scored = false;
 bool dead = false;
 bool keyChanged = false;
 bool velocity = false;
+sync syncy;
+corAux cory;
 int myid;
 int l, z; 
 int quantPlayers;
@@ -97,8 +97,6 @@ int main(void)
 		dead = false;
 		keyChanged = false;
 		velocity = false;
-		syncy = NULL;
-		cory = NULL;
 
 		//Inicialização de variáveis
 		syncy.eFSize = 0;
@@ -282,7 +280,7 @@ int main(void)
 			al_draw_text(raleway36, al_map_rgb(255, 255, 255), screenWidth / 2, screenHeight*0.75, ALLEGRO_ALIGN_CENTRE, "escolha sua skin");
 
 			if (!strlen(name))
-				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o login");
+				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o nome");
 
 			if (!strlen(ip))
 				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tb2pos[0] + al_get_bitmap_width(textbox) / 2, tb2pos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o IP");

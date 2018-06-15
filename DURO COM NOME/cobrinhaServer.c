@@ -28,7 +28,7 @@ int main()
         return -1;
 
     serverInit(maxPlayers);
-        
+
     while (1)
     {
         struct msg_ret_t retorno;
@@ -145,7 +145,7 @@ int main()
                     if(player[id].score%20 == 1)
                     {
                         player[id].orientacao[((player[id].score / 20) + 5) + 1] = 0;
-                        if(((player[id].score / 20) + 5) + 1 == 25 || disconnects == 3)
+                        if(player[id].score >= 400 || disconnects == 3)
                         {
                             syncy.win[id] = 1;
                         }
