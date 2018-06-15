@@ -1,5 +1,6 @@
 #include "libSocket/server.h"
 #include "libAllegro/AllegroCore.h"
+#include <string.h>
 
 Snake player[maxPlayers];
 direc pack_server;
@@ -12,7 +13,7 @@ int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
 int *orientation;
-int moveSpeed = 2;
+float moveSpeed = 3;
 bool started = false;
 int pressed[maxPlayers];
 
@@ -107,6 +108,7 @@ int main()
 
             recvMsgFromClient(&cory, id, WAIT_FOR_IT);
             player[id].skin = cory.cor;          
+            strcpy(player[id].name, cory.login);       
         }
         
         if(quantPlayers==1 && !started){
@@ -191,8 +193,8 @@ int main()
 
                 player[id].orientacao[0] = orientation[id];
 
-                player[id].x += cos(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
-                player[id].y -= sin(orientation[id] * 3.1415926 / 180.0) * moveSpeed;
+                player[id].x += cos(orientation[id] * 3.1415926 / 180.0) * (moveSpeed - player[id].score / 200);
+                player[id].y -= sin(orientation[id] * 3.1415926 / 180.0) * (moveSpeed - player[id].score / 200);
 
                 if (player[id].x > worldWidth)
                         player[id].x -= worldWidth;
@@ -234,8 +236,8 @@ int main()
 
                             player[idAtual].orientacao[0] = orientation[idAtual];
 
-                            (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
-                            (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+                            (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * (moveSpeed - player[idAtual].score / 200);
+                            (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * (moveSpeed - player[idAtual].score / 200);
 
                             if (player[idAtual].x > worldWidth)
                                     player[idAtual].x -= worldWidth;
@@ -274,14 +276,14 @@ int main()
                             else if (orientation[idAtual] == -1)
                                 orientation[idAtual] = 359;
                         }
-                        
+
                         for (count = (player[idAtual].score / 20) + 5; count > 0; count--)
                             player[idAtual].orientacao[count] = player[idAtual].orientacao[count-1];
 
                         player[idAtual].orientacao[0] = orientation[idAtual];
 
-                        (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
-                        (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * moveSpeed;
+                        (player[idAtual].x) += cos(orientation[idAtual] * 3.1415926 / 180.0) * (moveSpeed - player[idAtual].score / 200);
+                        (player[idAtual].y) -= sin(orientation[idAtual] * 3.1415926 / 180.0) * (moveSpeed - player[idAtual].score / 200);
 
                         if (player[idAtual].x > worldWidth)
                                 player[idAtual].x -= worldWidth;

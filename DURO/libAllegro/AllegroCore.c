@@ -1,6 +1,40 @@
 #include "AllegroCore.h"
 
 
+bool testIP(char ip[16])
+{
+    int countpt = 0, i;
+    bool error = false;
+    for (i = 0; i < strlen(ip); i++)
+    {
+        if (!i)
+        {
+            if (ip[i] == '.')
+            {
+                error = true;
+                break;
+            }
+        }
+        else
+        {
+            if (ip[i] == '.')
+            {
+                if (ip[i-1] == '.')
+                {
+                    error = true;
+                    break;
+                }
+                else
+                    countpt++;
+            }
+        }
+    }
+
+    if (countpt != 3)
+        error = true;
+
+    return !error;
+}
 
 bool coreInit()
 {

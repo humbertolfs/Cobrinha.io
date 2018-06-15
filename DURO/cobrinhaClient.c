@@ -1,5 +1,6 @@
 #include "libAllegro/AllegroCore.h"
 #include "libSocket/client.h"
+#include <string.h>
 
 // Funções do jogo
 bool initialize();
@@ -47,7 +48,10 @@ ALLEGRO_DISPLAY *display;
 ALLEGRO_BITMAP  *background;
 ALLEGRO_TIMER *timer;
 ALLEGRO_FONT *raleway16;
+ALLEGRO_FONT *raleway20;
 ALLEGRO_FONT *raleway48;
+ALLEGRO_AUDIO_STREAM *audioStream = NULL;
+ALLEGRO_SAMPLE *beep = NULL;
 
 
 int main(void)
@@ -56,6 +60,9 @@ int main(void)
 	{
 		return -1;
 	}
+
+    al_attach_audio_stream_to_mixer(audioStream, al_get_default_mixer());
+    al_set_audio_stream_playmode(audioStream, ALLEGRO_PLAYMODE_LOOP);
 
 	//Inicialização de variáveis
 	syncy.eFSize = 0;
@@ -77,7 +84,7 @@ int main(void)
 	bool escPlay = false;
 	bool tbSelected = false;
 	bool tb2Selected = false;
-	char selectedSkin = 1, totalSkins = 5, nextSkin = 2, previousSkin = 5;
+	char selectedSkin = 1, totalSkins = 13, nextSkin = 2, previousSkin = 13;
 	ALLEGRO_FONT *raleway56 = al_load_font("res/ttf/Raleway-ExtraLight.ttf", 56, 0);
 	ALLEGRO_FONT *raleway32 = al_load_font("res/ttf/Raleway-Medium.ttf", 28, 0);
 
@@ -90,6 +97,7 @@ int main(void)
 		// "Reset" das variáveis toda vez que volta pro começo do loop (MUDAR P FALSE E TRUE, RESPECTIVAMENTE DPS DOS TESTES)
 		bool mainScreen = true;
 		bool playScreen = false;
+    	al_set_audio_stream_playing(audioStream, true);
 
 		bool MO = false;
 
@@ -110,6 +118,9 @@ int main(void)
 
 		while (mainScreen)
 		{
+			// Dá um flush nos eventos
+			al_flush_event_queue(event_queue);
+
 			// Exibe o cursor do mouse
 			al_show_mouse_cursor(display);
 
@@ -283,6 +294,110 @@ int main(void)
 						mainScreen = false;
 						break;
 					}
+					else if (events.keyboard.keycode == ALLEGRO_KEY_TAB)
+					{
+						if (tbSelected)
+						{
+							tbSelected = false;
+							tb2Selected = true;
+							break;
+						}
+						else if (tb2Selected)
+						{
+							tbSelected = true;
+							tb2Selected = false;
+							break;
+						}
+					}
+					else if (events.keyboard.keycode == ALLEGRO_KEY_ENTER)
+					{
+						// Evento de enter no botão de jogar
+						// Conexão com o servidor, casos de erro de conexão, etc.
+
+						//Verifica se a string do nome não está vazia e nem o IP
+						if (strlen(name) > 0 && strlen(ip) > 0)
+						{
+							cory.cor = selectedSkin;
+							strcpy(cory.login, name);
+
+							if (testIP(ip))
+							{
+								// Inicializa o player
+								//char ServerIP[30]={"127.0.0.1"};
+								enum conn_ret_t ans = connectToServer(ip);
+
+							    if (ans != SERVER_UP) 
+								{
+								    if (ans == SERVER_DOWN) {
+										al_show_native_message_box(display, "Cobrinha.io", "Servidor inativo", "Tente novamente",
+											NULL, ALLEGRO_MESSAGEBOX_WARN);
+								    } else if (ans == SERVER_FULL) {
+										al_show_native_message_box(display, "Cobrinha.io", "Servidor cheio", "Tente novamente",
+											NULL, ALLEGRO_MESSAGEBOX_WARN);
+								    } else if (ans == SERVER_CLOSED) {
+										al_show_native_message_box(display, "Cobrinha.io", "Servidor fechado", "Tente novamente",
+											NULL, ALLEGRO_MESSAGEBOX_WARN);
+								    } else {
+										al_show_native_message_box(display, "Cobrinha.io", "Sem resposta", "Tente novamente",
+											NULL, ALLEGRO_MESSAGEBOX_WARN);
+								    }
+								} else {
+									recvMsgFromServer(&myid, WAIT_FOR_IT);
+
+							    	printf("Meu id eh %i\n", myid);
+
+							    	sendMsgToServer(&cory, sizeof(corAux));
+
+									al_hide_mouse_cursor(display);
+
+					    			// Aguarda outros jogadores
+							    	al_clear_to_color(al_map_rgb(22, 28, 34));
+
+									al_draw_tinted_bitmap_region(background, al_map_rgba_f(1, 1, 1, 0.2), 0, 0, screenWidth, screenHeight, 0, 0, 0);
+
+							    	al_draw_text(raleway56, al_map_rgb(255, 255, 255), (screenWidth / 2), (screenHeight / 2) - 38, ALLEGRO_ALIGN_CENTRE, "aguardando os jogadores");
+									
+							    	al_draw_text(raleway32, al_map_rgb(249, 38, 114), (screenWidth / 2), (screenHeight / 2) + 24, ALLEGRO_ALIGN_CENTRE, "seu jogo vai iniciar em breve");
+							    	al_flip_display();
+
+							    	recvMsgFromServer(&quantPlayers, WAIT_FOR_IT);
+
+									// Vai para a tela do jogo
+									dead = false;
+									playScreen = true;
+									mainScreen = false;
+									break;
+								}
+							}
+							else
+							{
+								al_show_native_message_box(display, "Cobrinha.io", "IP em formato incorreto", "Tente novamente",
+									NULL, ALLEGRO_MESSAGEBOX_WARN);
+							}
+						}
+						else
+						{
+							al_show_native_message_box(display, "Cobrinha.io", "Preencha todos os dados", "Tente novamente",
+								NULL, ALLEGRO_MESSAGEBOX_WARN);
+						}	
+					}
+					else if (events.keyboard.keycode == ALLEGRO_KEY_LEFT)
+					{
+						if (selectedSkin - 1 < 1)
+							selectedSkin = totalSkins;
+						else
+							selectedSkin--;
+
+						break;
+					}
+					else if (events.keyboard.keycode == ALLEGRO_KEY_RIGHT)
+					{
+						if (selectedSkin + 1 > totalSkins)
+							selectedSkin = 1;
+						else
+							selectedSkin++;
+						break;
+					}
 					else
 					{
 						const int inputChar = events.keyboard.unichar;
@@ -327,6 +442,15 @@ int main(void)
 							break;
 						}
 					}
+				}
+
+				// Evento para fechar o jogo
+				if (events.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+				{
+					escPlay = false;
+					mainLoop = false;
+					mainScreen = false;
+					break;
 				}
 
 				// Evento para ESC durante o jogo não bugar com o ESC durante o menu inicial
@@ -448,59 +572,68 @@ int main(void)
 								if (strlen(name) > 0 && strlen(ip) > 0)
 								{
 									cory.cor = selectedSkin;
+									strcpy(cory.login, name);
 
-									// Inicializa o player
-									//char ServerIP[30]={"127.0.0.1"};
-									enum conn_ret_t ans = connectToServer(ip);
-
-								    if (ans != SERVER_UP) 
+									if (testIP(ip))
 									{
-									    if (ans == SERVER_DOWN) {
-											al_show_native_message_box(display, "Cobrinha.io", "O servidor esta inativo!", "Tente novamente",
-												NULL, ALLEGRO_MESSAGEBOX_WARN);
-									    } else if (ans == SERVER_FULL) {
-											al_show_native_message_box(display, "Cobrinha.io", "O servidor esta cheio!", "Tente novamente",
-												NULL, ALLEGRO_MESSAGEBOX_WARN);
-									    } else if (ans == SERVER_CLOSED) {
-											al_show_native_message_box(display, "Cobrinha.io", "O servidor nao permite novas conexoes!", "Tente novamente",
-												NULL, ALLEGRO_MESSAGEBOX_WARN);
-									    } else {
-											al_show_native_message_box(display, "Cobrinha.io", "O servidor nao respondeu!", "Tente novamente",
-												NULL, ALLEGRO_MESSAGEBOX_WARN);
-									    }
-									} else {
-										recvMsgFromServer(&myid, WAIT_FOR_IT);
+										// Inicializa o player
+										//char ServerIP[30]={"127.0.0.1"};
+										enum conn_ret_t ans = connectToServer(ip);
 
-								    	printf("Meu id eh %i\n", myid);
+									    if (ans != SERVER_UP) 
+										{
+										    if (ans == SERVER_DOWN) {
+												al_show_native_message_box(display, "Cobrinha.io", "Servidor inativo", "Tente novamente",
+													NULL, ALLEGRO_MESSAGEBOX_WARN);
+										    } else if (ans == SERVER_FULL) {
+												al_show_native_message_box(display, "Cobrinha.io", "Servidor cheio", "Tente novamente",
+													NULL, ALLEGRO_MESSAGEBOX_WARN);
+										    } else if (ans == SERVER_CLOSED) {
+												al_show_native_message_box(display, "Cobrinha.io", "Servidor fechado", "Tente novamente",
+													NULL, ALLEGRO_MESSAGEBOX_WARN);
+										    } else {
+												al_show_native_message_box(display, "Cobrinha.io", "Sem resposta", "Tente novamente",
+													NULL, ALLEGRO_MESSAGEBOX_WARN);
+										    }
+										} else {
+											recvMsgFromServer(&myid, WAIT_FOR_IT);
 
-								    	sendMsgToServer(&cory, sizeof(corAux));
+									    	printf("Meu id eh %i\n", myid);
 
-										al_hide_mouse_cursor(display);
+									    	sendMsgToServer(&cory, sizeof(corAux));
 
-						    			// Aguarda outros jogadores
-								    	al_clear_to_color(al_map_rgb(22, 28, 34));
+											al_hide_mouse_cursor(display);
 
-										al_draw_tinted_bitmap_region(background, al_map_rgba_f(1, 1, 1, 0.2), 0, 0, screenWidth, screenHeight, 0, 0, 0);
+							    			// Aguarda outros jogadores
+									    	al_clear_to_color(al_map_rgb(22, 28, 34));
 
-								    	al_draw_text(raleway56, al_map_rgb(255, 255, 255), (screenWidth / 2), (screenHeight / 2) - 38, ALLEGRO_ALIGN_CENTRE, "aguardando os jogadores");
-										
-								    	al_draw_text(raleway32, al_map_rgb(249, 38, 114), (screenWidth / 2), (screenHeight / 2) + 24, ALLEGRO_ALIGN_CENTRE, "seu jogo vai iniciar em breve");
-								    	al_flip_display();
+											al_draw_tinted_bitmap_region(background, al_map_rgba_f(1, 1, 1, 0.2), 0, 0, screenWidth, screenHeight, 0, 0, 0);
 
-								    	recvMsgFromServer(&quantPlayers, WAIT_FOR_IT);
+									    	al_draw_text(raleway56, al_map_rgb(255, 255, 255), (screenWidth / 2), (screenHeight / 2) - 38, ALLEGRO_ALIGN_CENTRE, "aguardando os jogadores");
+											
+									    	al_draw_text(raleway32, al_map_rgb(249, 38, 114), (screenWidth / 2), (screenHeight / 2) + 24, ALLEGRO_ALIGN_CENTRE, "seu jogo vai iniciar em breve");
+									    	al_flip_display();
 
-										// Vai para a tela do jogo
-										dead = false;
-										playScreen = true;
-										mainScreen = false;
-										break;
+									    	recvMsgFromServer(&quantPlayers, WAIT_FOR_IT);
+
+											// Vai para a tela do jogo
+											dead = false;
+											playScreen = true;
+											mainScreen = false;
+											break;
+										}
+									}
+									else
+									{
+										al_show_native_message_box(display, "Cobrinha.io", "IP em formato incorreto", "Tente novamente",
+											NULL, ALLEGRO_MESSAGEBOX_WARN);
 									}
 								}
 								else
 								{
-									al_show_native_message_box(display, "Cobrinha.io", "Preencha todos os dados!", "Tente novamente",
+									al_show_native_message_box(display, "Cobrinha.io", "Preencha todos os dados", "Tente novamente",
 										NULL, ALLEGRO_MESSAGEBOX_WARN);
-								}
+								}		
 							}
 
 							if (changed)
@@ -517,6 +650,8 @@ int main(void)
 
 		while (playScreen)
 		{
+    		al_set_audio_stream_playing(audioStream, false);
+
 			pressed = 0;
 
 			al_start_timer(timer);
@@ -686,7 +821,10 @@ int main(void)
 
 	al_destroy_display(display);
 	al_destroy_timer(timer);
+	al_destroy_bitmap(background);
 	al_destroy_event_queue(event_queue);
+    al_destroy_audio_stream(audioStream);
+    al_destroy_sample(beep);
 
 	return 0;
 }
@@ -700,6 +838,24 @@ bool initialize()
 		return false;
 	}
 
+    if (!al_install_audio())
+    {
+        fprintf(stderr, "Falha ao inicializar áudio.\n");
+        return false;
+    }
+ 
+    if (!al_init_acodec_addon())
+    {
+        fprintf(stderr, "Falha ao inicializar codecs de áudio.\n");
+        return false;
+    }
+ 
+    if (!al_reserve_samples(1))
+    {
+        fprintf(stderr, "Falha ao alocar canais de áudio.\n");
+        return false;
+    }
+ 
 	if (!al_init_primitives_addon())
 	{
 		fprintf(stderr, "Falha ao inicializar add-on de primitivas.\n");
@@ -735,6 +891,22 @@ bool initialize()
 		fprintf(stderr, "Falha ao inicializar add-on de imagens.\n");
 		return false;
 	}
+ 
+    beep = al_load_sample("res/wav/beep.wav");
+
+    if (!beep)
+    {
+        fprintf(stderr, "Falha ao carregar sample.\n");
+        return false;
+    }
+
+    audioStream = al_load_audio_stream("res/wav/music.wav", 4, 1024);
+
+    if (!audioStream)
+    {
+        fprintf(stderr, "Falha ao carregar audio.\n");
+        return false;
+    }
 
 	// Descomente as próximas linhas para rodar o jogo em tela cheia
 
@@ -762,12 +934,14 @@ bool initialize()
 	event_queue = al_create_event_queue();
 	al_register_event_source(event_queue, al_get_keyboard_event_source());
 	al_register_event_source(event_queue, al_get_mouse_event_source());
+	al_register_event_source(event_queue, al_get_display_event_source(display));
 
 	// Configura o timer
 	timer = al_create_timer(1.0 / FPS);
 	al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
 	raleway16 = al_load_font("res/ttf/Raleway-SemiBold.ttf", 16, 0);
+	raleway20 = al_load_font("res/ttf/Raleway-SemiBold.ttf", 20, 0);
 	raleway48 = al_load_font("res/ttf/Raleway-Medium.ttf", 48, 0);
 
 	al_clear_to_color(al_map_rgb(30, 30, 30));
@@ -790,7 +964,7 @@ bool initialize()
 	return true;
 }
 
-void getSkinRGB(char skin, int ret[3])
+void getSkinRGB(char skin, int *ret)
 {
 	// Retorna a cor da skin escolhida
 
@@ -820,6 +994,61 @@ void getSkinRGB(char skin, int ret[3])
 		ret[0] = 245;
 		ret[1] = 232;
 		ret[2] = 42;
+		break;
+	case 6:
+		ret[0] = 223;
+		ret[1] = 0;
+		ret[2] = 36;
+		break;
+	case 7:
+		ret[0] = 44;
+		ret[1] = 44;
+		ret[2] = 44;
+		break;
+	case 8:
+		ret[0] = 201;
+		ret[1] = 201;
+		ret[2] = 201;
+		break;
+	case 9:
+		ret[0] = 223;
+		ret[1] = 0;
+		ret[2] = 36;
+		ret[3] = 201;
+		ret[4] = 201;
+		ret[5] = 201;
+		break;
+	case 10:
+		ret[0] = 245;
+		ret[1] = 232;
+		ret[2] = 42;
+		ret[3] = 44;
+		ret[4] = 44;
+		ret[5] = 44;
+		break;
+	case 11:
+		ret[0] = 245;
+		ret[1] = 232;
+		ret[2] = 42;
+		ret[3] = 68;
+		ret[4] = 218;
+		ret[5] = 76;
+		break;
+	case 12:
+		ret[0] = 116;
+		ret[1] = 38;
+		ret[2] = 249;
+		ret[3] = 245;
+		ret[4] = 114;
+		ret[5] = 42;
+		break;
+	case 13:
+		ret[0] = 44;
+		ret[1] = 44;
+		ret[2] = 44;
+		ret[3] = 201;
+		ret[4] = 201;
+		ret[5] = 201;
 		break;
 	}
 
@@ -864,7 +1093,13 @@ void drawChar(Snake character)
 	// Desenha a cobra do usuário
 	int i, ballsNumber = (int)(character.score / 20) + 5, modBalls = (int)(character.score % 20);
 
-	int rgb[3];
+	int *rgb;
+
+	if (character.skin > 8)
+		rgb = malloc(6*sizeof(int));
+	else
+		rgb = malloc(3*sizeof(int));
+
 	getSkinRGB(character.skin, rgb);
 
 	float k;
@@ -877,12 +1112,32 @@ void drawChar(Snake character)
 			float cos_rad = cos(rad_orientation);
 			float sin_rad = sin(rad_orientation);
 			k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
-
-			if (i == ballsNumber - 1)
-				drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * modBalls), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * modBalls), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-			else
-				drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
-
+            
+            if (character.skin > 8)
+            {
+	            if (i % 2 == 1)
+	            {
+	            	if (i == ballsNumber - 1)
+						drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * modBalls), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * modBalls), character.radius, (int)(k*rgb[3]), (int)(k*rgb[4]), (int)(k*rgb[5]), 255);
+					else
+						drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[3]), (int)(k*rgb[4]), (int)(k*rgb[5]), 255);
+	            }
+	            else
+	            {
+	            	if (i == ballsNumber - 1)
+						drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * modBalls), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * modBalls), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+					else
+						drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+	            }
+            }
+            else
+            {
+            	if (i == ballsNumber - 1)
+					drawCircle(character.x - (cos_rad * (i-1) * character.radius) - (cos_rad * modBalls), character.y + (sin_rad * (i - 1) * character.radius) + (sin_rad * modBalls), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+				else
+					drawCircle(character.x - (cos_rad * i * character.radius), character.y + (sin_rad * i * character.radius), character.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+            }	
+			
 			if (!i)
 			{
 				// Cálculos pros olhos
@@ -903,9 +1158,40 @@ void drawChar(Snake character)
 				// Desenha a parte preta dos olhos
 				drawCircle(character.x + offset_x1 - (character.radius / 8), character.y + offset_y1, character.radius / 8, 0, 0, 0, 255);
 				drawCircle(character.x + offset_x2 - (character.radius / 8), character.y + offset_y2, character.radius / 8, 0, 0, 0, 255);
+
+				char str[16];
+				strcpy(str, character.name);
+
+				int index = strlen(character.name);
+
+				str[index++] = ' ';
+				str[index++] = '|';
+				str[index++] = ' ';
+
+				if (character.score >= 100)
+				{
+					str[index++] = (character.score / 100) + '0';
+					str[index++] = ((character.score % 100) / 10) + '0';
+					str[index++] = (((character.score % 100) % 10)) + '0';
+				}
+				else if (character.score >= 10)
+				{
+					str[index++] = (character.score / 10) + '0';
+					str[index++] = (character.score % 10) + '0';				
+				}
+				else
+				{
+					str[index++] = character.score + '0';		
+				}
+
+				str[index] = '\0';
+
+				al_draw_text(raleway16, al_map_rgb(255, 255, 255), character.x + 15.4, character.y + 15.4, 0, str);
+
 			}
 		}
 	}
+	free(rgb);
 }
 
 void drawEnemy(Snake enemy)
@@ -913,7 +1199,13 @@ void drawEnemy(Snake enemy)
 	// Desenha a cobra do adversário
 	int i, ballsNumber = (int)(enemy.score / 20) + 5, modBalls = (int)(enemy.score % 20);
 
-	int rgb[3];
+	int *rgb;
+
+	if (enemy.skin > 8)
+		rgb = malloc(6*sizeof(int));
+	else
+		rgb = malloc(3*sizeof(int));
+
 	getSkinRGB(enemy.skin, rgb);
 
 	float k;
@@ -926,10 +1218,32 @@ void drawEnemy(Snake enemy)
 			float cos_rad = cos(rad_orientation);
 			float sin_rad = sin(rad_orientation);
 			k = (float)(2 * (ballsNumber - 1) - i) / (2 * (ballsNumber - 1));
-			if (i == ballsNumber - 1)
-				drawCircle(enemy.x - (cos_rad * (i - 1) * enemy.radius) - (cos_rad * modBalls), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * modBalls), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+
+			if (enemy.skin > 8)
+			{
+				if (i % 2 == 1)
+	            {
+	            	if (i == ballsNumber - 1)
+						drawCircle(enemy.x - (cos_rad * (i-1) * enemy.radius) - (cos_rad * modBalls), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * modBalls), enemy.radius, (int)(k*rgb[3]), (int)(k*rgb[4]), (int)(k*rgb[5]), 255);
+					else
+						drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[3]), (int)(k*rgb[4]), (int)(k*rgb[5]), 255);
+	            }
+	            else
+	            {
+	            	if (i == ballsNumber - 1)
+						drawCircle(enemy.x - (cos_rad * (i-1) * enemy.radius) - (cos_rad * modBalls), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * modBalls), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+					else
+						drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+	            }
+			}
 			else
-				drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+			{
+				if (i == ballsNumber - 1)
+					drawCircle(enemy.x - (cos_rad * (i-1) * enemy.radius) - (cos_rad * modBalls), enemy.y + (sin_rad * (i - 1) * enemy.radius) + (sin_rad * modBalls), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+				else
+					drawCircle(enemy.x - (cos_rad * i * enemy.radius), enemy.y + (sin_rad * i * enemy.radius), enemy.radius, (int)(k*rgb[0]), (int)(k*rgb[1]), (int)(k*rgb[2]), 255);
+			}
+			
 
 			if ((enemy.x - (cos_rad * i * enemy.radius) - enemy.radius + 5 > player[myid].x - player[myid].radius &&
 				enemy.x - (cos_rad * i * enemy.radius) - enemy.radius - 5 < player[myid].x + player[myid].radius &&
@@ -959,9 +1273,39 @@ void drawEnemy(Snake enemy)
 				// Desenha a parte preta dos olhos
 				drawCircle(enemy.x + offset_x1 - (enemy.radius / 8), enemy.y + offset_y1, (float)enemy.radius / 8, 0, 0, 0, 255);
 				drawCircle(enemy.x + offset_x2 - (enemy.radius / 8), enemy.y + offset_y2, (float)enemy.radius / 8, 0, 0, 0, 255);
+				
+				char str[16];
+				strcpy(str, enemy.name);
+
+				int index = strlen(enemy.name);
+
+				str[index++] = ' ';
+				str[index++] = '|';
+				str[index++] = ' ';
+
+				if (enemy.score >= 100)
+				{
+					str[index++] = (enemy.score / 100) + '0';
+					str[index++] = ((enemy.score % 100) / 10) + '0';
+					str[index++] = (((enemy.score % 100) % 10)) + '0';
+				}
+				else if (enemy.score >= 10)
+				{
+					str[index++] = (enemy.score / 10) + '0';
+					str[index++] = (enemy.score % 10) + '0';				
+				}
+				else
+				{
+					str[index++] = enemy.score + '0';	
+				}
+
+				str[index] = '\0';
+
+				al_draw_text(raleway16, al_map_rgb(255, 255, 255), enemy.x + 15.4, enemy.y + 15.4, 0, str);
 			}
 		}
 	}
+	free(rgb);
 }
 
 void drawFood()
@@ -1015,6 +1359,7 @@ void drawFood()
 						rY + 3 < player[myid].y + player[myid].radius)) 
 				{
 					// ENCOSTA EM UM PONTO
+					al_play_sample(beep, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
                     lastEated = ij;
                     pack.scored = true;
 					pack.ij = ij;

@@ -11,6 +11,8 @@
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_native_dialog.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_ttf.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -39,11 +41,13 @@ typedef struct Snake
 	char skin;
 	short int orientacao[25];
 	short int score;
+	char name[6];
 } Snake;
 
 typedef struct corAux
 {
 	char cor;
+	char login[6];
 } corAux;
 
 typedef struct sync
@@ -59,6 +63,7 @@ typedef struct sync
 bool coreInit();
 bool windowInit(int W, int H, char title[]);
 void allegroEnd();
+bool testIP(char ip[16]);
 
 //Funções para Controle da quantidade de Frames por Segundo
 void startTimer();
