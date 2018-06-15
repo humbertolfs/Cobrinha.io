@@ -70,18 +70,19 @@ void serverInit(int max_clients){
 }
 
 // If needed to clean everything
-void serverReset(){
-	int i;
-	for (i = 0; i < actual_max_clients; ++i) {
-		if (isValidId(i)) {
-  			disconnectClient(i);
-		}
-	}
-	memset(connected_clients, 0, (size_t)actual_max_clients * sizeof(int));
-	clients_connected = 0;
-	FD_ZERO(&active_fd_set);
-	FD_ZERO(&server_fd_set);
-	FD_SET(server_sock, &server_fd_set);
+void serverReset() {
+  int i;
+  for (i = 0; i < actual_max_clients; ++i) {
+    if (isValidId(i)) {
+      disconnectClient(i);
+    }
+  }
+  memset(connected_clients, 0,
+         (size_t)actual_max_clients * sizeof(server_view_client));
+  clients_connected = 0;
+  FD_ZERO(&active_fd_set);
+  FD_ZERO(&server_fd_set);
+  FD_SET(server_sock, &server_fd_set);
 }
 
 void rejectConnection() {

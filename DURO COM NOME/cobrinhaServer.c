@@ -12,7 +12,7 @@ int worldWidth = 2000;
 int worldHeight = 2000;
 enum directions { UP, DOWN, LEFT, RIGHT };
 int count, z, idAtual, quantPlayers = 0, scoreAux, l, alguem, l1 = 0, disconnects = 0, id = 0, reject = 0;
-int *orientation;
+int *orientation = NULL;
 float moveSpeed = 3;
 bool started = false;
 int pressed[maxPlayers], velocity[maxPlayers];
@@ -118,7 +118,7 @@ int main()
                 strcpy(player[id].name, cory.login);       
             }
             
-            if(quantPlayers==1 && !started){
+            if(quantPlayers==3 && !started){
                 broadcast(&quantPlayers, sizeof(int));
                 reject = 1;
                 started = true;
@@ -162,6 +162,7 @@ int main()
                         reject = 0;
                         serverReset();
                         sair = true;
+                        break;
                     }
 
                     if(pack_server.scored)

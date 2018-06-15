@@ -47,7 +47,7 @@ typedef struct Snake
 typedef struct corAux
 {
 	char cor;
-	char login[6];
+	char login[19];
 } corAux;
 
 typedef struct sync
