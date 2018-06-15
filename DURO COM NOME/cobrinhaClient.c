@@ -15,6 +15,8 @@ void drawFood();
 //structs
 Snake player[maxPlayers];
 direc pack;
+sync syncy;
+corAux cory;
 
 // Variáveis de controle
 int cameraPosition[2] = { 0, 0 };
@@ -34,8 +36,6 @@ bool scored = false;
 bool dead = false;
 bool keyChanged = false;
 bool velocity = false;
-sync syncy;
-corAux cory;
 int myid;
 int l, z; 
 int quantPlayers;
@@ -65,6 +65,22 @@ int main(void)
     al_attach_audio_stream_to_mixer(audioStream, al_get_default_mixer());
     al_set_audio_stream_playmode(audioStream, ALLEGRO_PLAYMODE_LOOP);
 
+	//Inicialização de variáveis
+	syncy.eFSize = 0;
+
+    for(l = 0; l < 50; l++)
+	{
+		syncy.eatedFoods[l] = 0;
+	}
+
+	for(l = 0; l < maxPlayers; l++)
+    {
+        syncy.disc[l] = 0;
+        syncy.win[l] = 0;
+    }
+
+	pack.dead = 0;
+
 	bool mainLoop = true;
 	bool escPlay = false;
 	bool tbSelected = false;
@@ -86,33 +102,8 @@ int main(void)
 
 		bool MO = false;
 
-		// reseta as variáveis
 		cameraPosition[0] = 0;
 		cameraPosition[1] = 0;
-		orientation = 0;
-		pressed = 0;
-		lastEated = 0;
-		dir = LEFT;
-		scored = false;
-		dead = false;
-		keyChanged = false;
-		velocity = false;
-
-		//Inicialização de variáveis
-		syncy.eFSize = 0;
-
-	    for(l = 0; l < 50; l++)
-		{
-			syncy.eatedFoods[l] = 0;
-		}
-
-		for(l = 0; l < maxPlayers; l++)
-	    {
-	        syncy.disc[l] = 0;
-	        syncy.win[l] = 0;
-	    }
-
-		pack.dead = 0;
 
 		al_identity_transform(&camera);
 		al_translate_transform(&camera, 0, 0);
@@ -280,7 +271,7 @@ int main(void)
 			al_draw_text(raleway36, al_map_rgb(255, 255, 255), screenWidth / 2, screenHeight*0.75, ALLEGRO_ALIGN_CENTRE, "escolha sua skin");
 
 			if (!strlen(name))
-				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o nome");
+				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tbpos[0] + al_get_bitmap_width(textbox) / 2, tbpos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o login");
 
 			if (!strlen(ip))
 				al_draw_text(raleway36, al_map_rgba_f(1, 1, 1, 0.2), tb2pos[0] + al_get_bitmap_width(textbox) / 2, tb2pos[1] + 5, ALLEGRO_ALIGN_CENTRE, "digite o IP");
@@ -1181,7 +1172,7 @@ void drawChar(Snake character)
 				drawCircle(character.x + offset_x1 - (character.radius / 8), character.y + offset_y1, character.radius / 8, 0, 0, 0, 255);
 				drawCircle(character.x + offset_x2 - (character.radius / 8), character.y + offset_y2, character.radius / 8, 0, 0, 0, 255);
 
-				char str[31];
+				char str[26];
 				strcpy(str, character.name);
 
 				int index = strlen(character.name);
@@ -1296,7 +1287,7 @@ void drawEnemy(Snake enemy)
 				drawCircle(enemy.x + offset_x1 - (enemy.radius / 8), enemy.y + offset_y1, (float)enemy.radius / 8, 0, 0, 0, 255);
 				drawCircle(enemy.x + offset_x2 - (enemy.radius / 8), enemy.y + offset_y2, (float)enemy.radius / 8, 0, 0, 0, 255);
 				
-				char str[31];
+				char str[26];
 				strcpy(str, enemy.name);
 
 				int index = strlen(enemy.name);
